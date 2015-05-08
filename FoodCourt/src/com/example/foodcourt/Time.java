@@ -2,22 +2,22 @@ package com.example.foodcourt;
 
 public class Time extends Feature {
 
-	private int time;
+	private float time;
 
 	public Time() {
 		super("Time");
 	}
 
-	public Time(int time) {
+	public Time(float time) {
 		super("Time");
 		this.time = time;
 	}
-	
-	public void setTime(int time) {
+
+	public void setTime(float time) {
 		this.time = time;
 	}
 
-	public int getTime() {
+	public float getTime() {
 		return time;
 	}
 

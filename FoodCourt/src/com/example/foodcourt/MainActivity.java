@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
@@ -53,7 +52,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private FileWriter writer;
 	private String data;
 	private float starttime = 0;
-	private String status;
+	private String status = "Standing";
 
 	public Vibrator v;
 
@@ -152,8 +151,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 		// timestamp= System.currentTimeMillis();
 		double magnitude = Math.sqrt(x * x + y * y + z * z);
 		// test.append("X: " + x + ",Y:" + y + ",Z:" + z + "\n");
-		test.append("Magnitude: " + magnitude + ",Time:" + time + ",Status:"
-				+ status + "\n");
+		test.append(status + "," + magnitude + "," + time + "\n");
 		data = test.getText().toString();
 
 		// if the change is below 2, it is just plain noise
@@ -272,13 +270,13 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 		falsePositives = 1;
 
-		String fileName = "testing4.csv";
+		String fileName = "mysdfile.txt";
 		String path = Environment.getExternalStorageDirectory() + "/"
 				+ fileName;
-		File file = new File(path);
+		File file = new File("/sdcard/mysdfile.txt");
 		// FileInputStream fileInputStream = new FileInputStream(file);
 		// InputStream stream = getAssets().open("testing4.csv");
-		InputStream stream = new FileInputStream(file);
+		FileInputStream stream = new FileInputStream(file);
 
 		reader = new FileReader(stream);
 		instances = reader.buildInstances();
