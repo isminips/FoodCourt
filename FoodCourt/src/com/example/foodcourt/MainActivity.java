@@ -2,6 +2,7 @@ package com.example.foodcourt;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -45,8 +46,9 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 	private float vibrateThreshold = 0;
 
-	private TextView currentX, currentY, currentZ, maxX, maxY, maxZ, previousX,
-			previousY, previousZ;
+	// private TextView currentX, currentY, currentZ, maxX, maxY, maxZ,
+	// previousX,
+	// previousY, previousZ;
 	private TextView test;
 	private StringBuffer accel;
 	private FileWriter writer;
@@ -89,14 +91,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 	}
 
 	public void initializeViews() {
-		currentX = (TextView) findViewById(R.id.currentX);
-		currentY = (TextView) findViewById(R.id.currentY);
-		currentZ = (TextView) findViewById(R.id.currentZ);
+		// currentX = (TextView) findViewById(R.id.currentX);
+		// currentY = (TextView) findViewById(R.id.currentY);
+		// currentZ = (TextView) findViewById(R.id.currentZ);
 		test = (TextView) findViewById(R.id.test);
 
-		maxX = (TextView) findViewById(R.id.maxX);
-		maxY = (TextView) findViewById(R.id.maxY);
-		maxZ = (TextView) findViewById(R.id.maxZ);
 	}
 
 	// onResume() register the accelerometer for listening the events
@@ -127,16 +126,16 @@ public class MainActivity extends Activity implements SensorEventListener {
 	public void onSensorChanged(SensorEvent event) {
 
 		// clean current values
-		displayCleanValues();
+		// displayCleanValues();
 		// display the current x,y,z accelerometer values
-		displayCurrentValues();
+		// displayCurrentValues();
 		// display the max x,y,z accelerometer values
-		displayMaxValues();
+		// displayMaxValues();
 
 		// get the change of the x,y,z values of the accelerometer
-		deltaX = Math.abs(lastX - event.values[0]);
-		deltaY = Math.abs(lastY - event.values[1]);
-		deltaZ = Math.abs(lastZ - event.values[2]);
+		// deltaX = Math.abs(lastX - event.values[0]);
+		// deltaY = Math.abs(lastY - event.values[1]);
+		// deltaZ = Math.abs(lastZ - event.values[2]);
 		float x = event.values[0];
 		float y = event.values[1];
 		float z = event.values[2];
@@ -155,50 +154,50 @@ public class MainActivity extends Activity implements SensorEventListener {
 		data = test.getText().toString();
 
 		// if the change is below 2, it is just plain noise
-		if (deltaX < 2)
-			deltaX = 0;
-		if (deltaY < 2)
-			deltaY = 0;
-		if ((deltaZ > vibrateThreshold) || (deltaY > vibrateThreshold)
-				|| (deltaZ > vibrateThreshold)) {
-			v.vibrate(50);
-		}
+		// if (deltaX < 2)
+		// deltaX = 0;
+		// if (deltaY < 2)
+		// deltaY = 0;
+		// if ((deltaZ > vibrateThreshold) || (deltaY > vibrateThreshold)
+		// || (deltaZ > vibrateThreshold)) {
+		// v.vibrate(50);
+		// }
 
 		test.setMovementMethod(new ScrollingMovementMethod());
 
 	}
 
-	public void displayCleanValues() {
-		currentX.setText("0.0");
-		currentY.setText("0.0");
-		currentZ.setText("0.0");
-
-	}
+	// public void displayCleanValues() {
+	// currentX.setText("0.0");
+	// currentY.setText("0.0");
+	// currentZ.setText("0.0");
+	//
+	// }
 
 	// display the current x,y,z accelerometer values
-	public void displayCurrentValues() {
-		currentX.setText(Float.toString(deltaX));
-		currentY.setText(Float.toString(deltaY));
-		currentZ.setText(Float.toString(deltaZ));
-
-	}
+	// public void displayCurrentValues() {
+	// currentX.setText(Float.toString(deltaX));
+	// currentY.setText(Float.toString(deltaY));
+	// currentZ.setText(Float.toString(deltaZ));
+	//
+	// }
 
 	// display the max x,y,z accelerometer values
-	public void displayMaxValues() {
-
-		if (deltaX > deltaXMax) {
-			deltaXMax = deltaX;
-			maxX.setText(Float.toString(deltaXMax));
-		}
-		if (deltaY > deltaYMax) {
-			deltaYMax = deltaY;
-			maxY.setText(Float.toString(deltaYMax));
-		}
-		if (deltaZ > deltaZMax) {
-			deltaZMax = deltaZ;
-			maxZ.setText(Float.toString(deltaZMax));
-		}
-	}
+	// public void displayMaxValues() {
+	//
+	// if (deltaX > deltaXMax) {
+	// deltaXMax = deltaX;
+	// maxX.setText(Float.toString(deltaXMax));
+	// }
+	// if (deltaY > deltaYMax) {
+	// deltaYMax = deltaY;
+	// maxY.setText(Float.toString(deltaYMax));
+	// }
+	// if (deltaZ > deltaZMax) {
+	// deltaZMax = deltaZ;
+	// maxZ.setText(Float.toString(deltaZMax));
+	// }
+	// }
 
 	public void startAcc(View view) {
 		sensorManager.registerListener(this, accelerometer,
@@ -241,20 +240,28 @@ public class MainActivity extends Activity implements SensorEventListener {
 			Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_SHORT)
 					.show();
 		}
-	}// onClick
+
+	}
+
+	// onClick
 
 	public void change(View view) {
 		// getApplicationContext().deleteFile("accel.txt");
 		// accel = new StringBuffer("t\tx\ty\tz\n");
 		if (status == "Standing") {
 			status = "Walking";
-		} else
+			Button p1_button = (Button) findViewById(R.id.change);
+			p1_button.setText("Walking");
+		} else {
 			status = "Standing";
+			Button p1_button = (Button) findViewById(R.id.change);
+			p1_button.setText("Standing");
+		}
 
 	}
 
-	public void stopAcc(View view) throws IOException {
-		sensorManager.unregisterListener(this);
+	public void readfile(View view) throws FileNotFoundException {
+
 		starttime = 0;
 
 		System.out
@@ -321,4 +328,9 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 	}
 
+	public void stopAcc(View view) {
+		sensorManager.unregisterListener(this);
+		starttime = 0;
+
+	}
 }
