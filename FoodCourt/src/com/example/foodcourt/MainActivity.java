@@ -274,8 +274,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 		Instance classificationInstance = null;
 		FileReader newReader = null;
 		FileReader trainReader = null;
-		int numRuns = 0, truePositives = 0, falsePositives = 0, falseNegatives = 0, trueNegatives = 0;
-		double precision = 0, recall = 0, fMeasure = 0;
 
 		File file = new File("/sdcard/mysdfile.txt");
 		InputStream trainStream = getAssets().open("testing4.csv");
@@ -289,44 +287,20 @@ public class MainActivity extends Activity implements SensorEventListener {
 		do {
 			classificationInstance = newInstances.remove(0);
 
-			distances = Knn.calculateDistances(trainInstances,
-					classificationInstance);
+			distances = Knn.calculateDistances(trainInstances, classificationInstance);
 			neighbors = Knn.getNearestNeighbors(distances);
 			classification = Knn.determineMajority(neighbors);
 
-			System.out.println("Gathering " + Knn.K + " nearest neighbors to:");
+			//Knn.printNeighbors(neighbors);
+			System.out.println("\n-----Instance-----: ");
 			Knn.printClassificationInstance(classificationInstance);
-
-			Knn.printNeighbors(neighbors);
-			System.out.println("\nExpected situation result for instance: "
-					+ classification.toString());
-
-			if (classification.toString().equals(
-					((Label) classificationInstance.getAttributes().get(
-							Knn.LABEL_INDEX)).getLabel().toString())) {
-				truePositives++;
-			} else {
-				falseNegatives++;
-			}
-			numRuns++;
+			System.out.println("\nExpected situation result for instance: "	+ classification.toString());
 		} while (!newInstances.isEmpty());
-
-		precision = ((double) (truePositives / (double) (truePositives + falsePositives)));
-		recall = ((double) (truePositives / (double) (truePositives + falseNegatives)));
-		fMeasure = ((double) (precision * recall) / (double) (precision + recall));
-
-		System.out.println("Precision: " + precision);
-		System.out.println("Recall: " + recall);
-		System.out.println("F-Measure: " + fMeasure);
-		System.out
-				.println("Average distance: "
-						+ (double) (Knn.averageDistance / (double) (Knn.NUM_RUNS * Knn.K)));
 
 	}
 
 	public void stopAcc(View view) {
 		sensorManager.unregisterListener(this);
 		starttime = 0;
-
 	}
 }
