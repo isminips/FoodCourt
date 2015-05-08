@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
@@ -260,38 +261,35 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 	}
 
-	public void readfile(View view) throws FileNotFoundException {
+	public void readfile(View view) throws IOException {
 
 		starttime = 0;
 
-		System.out
-				.println("KNN STUFF! ---------------------------------------");
-		ArrayList<Instance> instances = null;
+		System.out.println("KNN STUFF! ---------------------------------------");
+		ArrayList<Instance> newInstances = null;
+		ArrayList<Instance> trainInstances = null;
 		ArrayList<Neighbor> distances = null;
 		ArrayList<Neighbor> neighbors = null;
 		Label.Activities classification = null;
 		Instance classificationInstance = null;
-		FileReader reader = null;
+		FileReader newReader = null;
+		FileReader trainReader = null;
 		int numRuns = 0, truePositives = 0, falsePositives = 0, falseNegatives = 0, trueNegatives = 0;
 		double precision = 0, recall = 0, fMeasure = 0;
 
-		falsePositives = 1;
-
-		String fileName = "mysdfile.txt";
-		String path = Environment.getExternalStorageDirectory() + "/"
-				+ fileName;
 		File file = new File("/sdcard/mysdfile.txt");
-		// FileInputStream fileInputStream = new FileInputStream(file);
-		// InputStream stream = getAssets().open("testing4.csv");
-		FileInputStream stream = new FileInputStream(file);
+		InputStream trainStream = getAssets().open("testing4.csv");
+		FileInputStream newStream = new FileInputStream(file);
 
-		reader = new FileReader(stream);
-		instances = reader.buildInstances();
+		newReader = new FileReader(newStream);
+		trainReader = new FileReader(trainStream);
+		newInstances = newReader.buildInstances();
+		trainInstances = trainReader.buildInstances();
 
 		do {
-			classificationInstance = Knn.extractIndividualInstance(instances);
+			classificationInstance = newInstances.remove(0);
 
-			distances = Knn.calculateDistances(instances,
+			distances = Knn.calculateDistances(trainInstances,
 					classificationInstance);
 			neighbors = Knn.getNearestNeighbors(distances);
 			classification = Knn.determineMajority(neighbors);
@@ -311,9 +309,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 				falseNegatives++;
 			}
 			numRuns++;
-
-			instances.add(classificationInstance);
-		} while (numRuns < Knn.NUM_RUNS);
+		} while (!newInstances.isEmpty());
 
 		precision = ((double) (truePositives / (double) (truePositives + falsePositives)));
 		recall = ((double) (truePositives / (double) (truePositives + falseNegatives)));
