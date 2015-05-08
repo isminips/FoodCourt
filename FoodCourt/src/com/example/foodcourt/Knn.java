@@ -3,7 +3,6 @@ package com.example.foodcourt;
 import java.util.*;
 
 public class Knn {
-	public static final String PATH_TO_DATA_FILE = "coupious.data";
 	public static final int NUM_ATTRS = 3;
 	public static final int K = 5;
 	
@@ -105,20 +104,10 @@ public class Knn {
 			
 			// for each feature, go through and calculate the "distance"
 			for(Feature f : instance.getAttributes()) {
-				if(f instanceof Label) {
-					Label.Activities label = ((Label) f).getLabel();
-					Label singleInstanceLabel = (Label)singleInstance.getAttributes().get(LABEL_INDEX);
-					distance += Math.pow((label.ordinal() - singleInstanceLabel.getLabel().ordinal()), 2);
-				}
-				else if(f instanceof Magnitude) {
-					double dist = ((Magnitude) f).getMagnitude();
-					Magnitude singleInstanceDist = (Magnitude)singleInstance.getAttributes().get(MAGNITUDE_INDEX);
-					distance += Math.pow((dist - singleInstanceDist.getMagnitude()), 2);
-				}
-				else if(f instanceof Time) {
-					int dist = ((Time) f).getTime();
-					Time singleInstanceDist = (Time)singleInstance.getAttributes().get(TIME_INDEX);
-					distance += Math.pow((dist - singleInstanceDist.getTime()), 2);
+				if(f instanceof Magnitude) {
+					double magnitude = ((Magnitude) f).getMagnitude();
+					Magnitude singleInstanceMagnitude = (Magnitude)singleInstance.getAttributes().get(MAGNITUDE_INDEX);
+					distance += Math.pow((magnitude - singleInstanceMagnitude.getMagnitude()), 2);
 				}
 				else {
 					System.out.println("Unknown category in distance calculation.  Exiting for debug: " + f);

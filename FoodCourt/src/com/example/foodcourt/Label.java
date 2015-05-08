@@ -4,8 +4,7 @@ public class Label extends Feature {
 
 	enum Activities {
 		Standing,
-		Walking,
-		Unknown
+		Walking
 	}
 	
 	private Activities label;
