@@ -4,13 +4,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 
-import net.sf.javaml.classification.Classifier;
-import net.sf.javaml.classification.KNearestNeighbors;
-import net.sf.javaml.core.Dataset;
-import net.sf.javaml.core.Instance;
-import net.sf.javaml.tools.data.FileHandler;
 import android.app.Activity;
 import android.content.Context;
 import android.hardware.Sensor;
@@ -208,7 +205,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 	}
 
 	public void clearText(View view) {
-
+		System.out.println("Clear");
 		test.setText("");
 
 	}
@@ -254,43 +251,54 @@ public class MainActivity extends Activity implements SensorEventListener {
 		sensorManager.unregisterListener(this);
 		starttime = 0;
 
-		/* Load a data set */
-		Dataset data;
+		System.out.println("KNN STUFF! ---------------------------------------");
+		ArrayList<Instance> instances = null;
+		ArrayList<Neighbor> distances = null;
+		ArrayList<Neighbor> neighbors = null;
+		Label.Activities classification = null;
+		Instance classificationInstance = null;
+		FileReader reader = null;
+		int numRuns = 0, truePositives = 0, falsePositives = 0, falseNegatives = 0, trueNegatives = 0;
+		double precision = 0, recall = 0, fMeasure = 0;
 
-		data = FileHandler.loadDataset(new File("/sdcard/training_set.csv"), 0,
-				",");
+		falsePositives = 1;
 
-		/*
-		 * Contruct a KNN classifier that uses 5 neighbors to make adecision.
-		 */
-		Classifier knn = new KNearestNeighbors(5);
-		knn.buildClassifier(data);
-		Dataset dataForClassification;
+		InputStream stream = getAssets().open("testing4.csv");
+		reader = new FileReader(stream);
+		instances = reader.buildInstances();
 
-		dataForClassification = FileHandler.loadDataset(new File(
-				"/sdcard/training_set.csv"), 0, ",");
+		do {
+			classificationInstance = Knn.extractIndividualInstance(instances);
 
-		/* Counters for correct and wrong predictions. */
-		int correct = 0, wrong = 0;
-		/* Classify all instances and check with the correct class values */
-		for (Instance inst : dataForClassification) {
-			Object predictedClassValue = knn.classify(inst);
-			Object realClassValue = inst.classValue();
-			if (predictedClassValue.equals(realClassValue)) {
-				correct++;
-				test.setText("correct" + correct);
-			} else {
-				wrong++;
-				test.setText("wrong" + wrong);
+			distances = Knn.calculateDistances(instances, classificationInstance);
+			neighbors = Knn.getNearestNeighbors(distances);
+			classification = Knn.determineMajority(neighbors);
+
+			System.out.println("Gathering " + Knn.K + " nearest neighbors to:");
+			Knn.printClassificationInstance(classificationInstance);
+
+			Knn.printNeighbors(neighbors);
+			System.out.println("\nExpected situation result for instance: " + classification.toString());
+
+			if(classification.toString().equals(((Label)classificationInstance.getAttributes().get(Knn.LABEL_INDEX)).getLabel().toString())) {
+				truePositives++;
 			}
-		}
-		// deltaX = 0;
-		// deltaY = 0;
-		// deltaZ = 0;
-		// maxX.setText("0.0");
-		// maxY.setText("0.0");
-		// maxZ.setText("0.0");
-		// displayCleanValues();
+			else {
+				falseNegatives++;
+			}
+			numRuns++;
+
+			instances.add(classificationInstance);
+		} while(numRuns < Knn.NUM_RUNS);
+
+		precision = ((double)(truePositives / (double)(truePositives + falsePositives)));
+		recall = ((double)(truePositives / (double)(truePositives + falseNegatives)));
+		fMeasure = ((double)(precision * recall) / (double)(precision + recall));
+
+		System.out.println("Precision: " + precision);
+		System.out.println("Recall: " + recall);
+		System.out.println("F-Measure: " + fMeasure);
+		System.out.println("Average distance: " + (double)(Knn.averageDistance / (double)(Knn.NUM_RUNS * Knn.K)));
 
 	}
 
