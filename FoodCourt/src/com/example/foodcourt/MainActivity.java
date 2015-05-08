@@ -1,6 +1,7 @@
 package com.example.foodcourt;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Vibrator;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
@@ -51,6 +53,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private FileWriter writer;
 	private String data;
 	private float starttime = 0;
+	private String status;
 
 	public Vibrator v;
 
@@ -149,7 +152,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 		// timestamp= System.currentTimeMillis();
 		double magnitude = Math.sqrt(x * x + y * y + z * z);
 		// test.append("X: " + x + ",Y:" + y + ",Z:" + z + "\n");
-		test.append("Magnitude: " + magnitude + ",Time:" + time + "\n");
+		test.append("Magnitude: " + magnitude + ",Time:" + time + ",Status:"
+				+ status + "\n");
 		data = test.getText().toString();
 
 		// if the change is below 2, it is just plain noise
@@ -241,9 +245,13 @@ public class MainActivity extends Activity implements SensorEventListener {
 		}
 	}// onClick
 
-	public void delete(View view) {
-		getApplicationContext().deleteFile("accel.txt");
+	public void change(View view) {
+		// getApplicationContext().deleteFile("accel.txt");
 		// accel = new StringBuffer("t\tx\ty\tz\n");
+		if (status == "Standing") {
+			status = "Walking";
+		} else
+			status = "Standing";
 
 	}
 
@@ -251,7 +259,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 		sensorManager.unregisterListener(this);
 		starttime = 0;
 
-		System.out.println("KNN STUFF! ---------------------------------------");
+		System.out
+				.println("KNN STUFF! ---------------------------------------");
 		ArrayList<Instance> instances = null;
 		ArrayList<Neighbor> distances = null;
 		ArrayList<Neighbor> neighbors = null;
@@ -263,14 +272,22 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 		falsePositives = 1;
 
-		InputStream stream = getAssets().open("testing4.csv");
+		String fileName = "testing4.csv";
+		String path = Environment.getExternalStorageDirectory() + "/"
+				+ fileName;
+		File file = new File(path);
+		// FileInputStream fileInputStream = new FileInputStream(file);
+		// InputStream stream = getAssets().open("testing4.csv");
+		InputStream stream = new FileInputStream(file);
+
 		reader = new FileReader(stream);
 		instances = reader.buildInstances();
 
 		do {
 			classificationInstance = Knn.extractIndividualInstance(instances);
 
-			distances = Knn.calculateDistances(instances, classificationInstance);
+			distances = Knn.calculateDistances(instances,
+					classificationInstance);
 			neighbors = Knn.getNearestNeighbors(distances);
 			classification = Knn.determineMajority(neighbors);
 
@@ -278,27 +295,31 @@ public class MainActivity extends Activity implements SensorEventListener {
 			Knn.printClassificationInstance(classificationInstance);
 
 			Knn.printNeighbors(neighbors);
-			System.out.println("\nExpected situation result for instance: " + classification.toString());
+			System.out.println("\nExpected situation result for instance: "
+					+ classification.toString());
 
-			if(classification.toString().equals(((Label)classificationInstance.getAttributes().get(Knn.LABEL_INDEX)).getLabel().toString())) {
+			if (classification.toString().equals(
+					((Label) classificationInstance.getAttributes().get(
+							Knn.LABEL_INDEX)).getLabel().toString())) {
 				truePositives++;
-			}
-			else {
+			} else {
 				falseNegatives++;
 			}
 			numRuns++;
 
 			instances.add(classificationInstance);
-		} while(numRuns < Knn.NUM_RUNS);
+		} while (numRuns < Knn.NUM_RUNS);
 
-		precision = ((double)(truePositives / (double)(truePositives + falsePositives)));
-		recall = ((double)(truePositives / (double)(truePositives + falseNegatives)));
-		fMeasure = ((double)(precision * recall) / (double)(precision + recall));
+		precision = ((double) (truePositives / (double) (truePositives + falsePositives)));
+		recall = ((double) (truePositives / (double) (truePositives + falseNegatives)));
+		fMeasure = ((double) (precision * recall) / (double) (precision + recall));
 
 		System.out.println("Precision: " + precision);
 		System.out.println("Recall: " + recall);
 		System.out.println("F-Measure: " + fMeasure);
-		System.out.println("Average distance: " + (double)(Knn.averageDistance / (double)(Knn.NUM_RUNS * Knn.K)));
+		System.out
+				.println("Average distance: "
+						+ (double) (Knn.averageDistance / (double) (Knn.NUM_RUNS * Knn.K)));
 
 	}
 

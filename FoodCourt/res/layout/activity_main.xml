@@ -204,11 +204,11 @@
         android:text="Save" />
      
       <Button
-        android:id="@+id/delete"
+        android:id="@+id/change"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="delete"
-        android:text="Delete" />
+        android:onClick="change"
+        android:text="Change" />
     </LinearLayout>
 
 </LinearLayout>
