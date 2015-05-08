@@ -108,8 +108,11 @@ public class Knn {
 					double magnitude = ((Magnitude) f).getMagnitude();
 					Magnitude singleInstanceMagnitude = (Magnitude)singleInstance.getAttributes().get(MAGNITUDE_INDEX);
 					distance += Math.pow((magnitude - singleInstanceMagnitude.getMagnitude()), 2);
-				}
-				else {
+				} else if (f instanceof Time) {
+					// Do nothing!
+				} else if (f instanceof Label) {
+					// Do nothing!
+				} else {
 					System.out.println("Unknown category in distance calculation.  Exiting for debug: " + f);
 					System.exit(1);
 				}
