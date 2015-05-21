@@ -23,14 +23,18 @@ import android.widget.Toast;
 public class MainActivity extends Activity implements SensorEventListener {
 
     private final int TIER_1_SAMPLING_TIME = 1000;
+    private final int TIER_2_SAMPLING_TIME = 2;
     private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
+	private TextView averageServiceTimeLabel;
+	private TextView totalQueueingTimeLabel;
 	private String data = "";
 	private float starttime = 0;
-	private String status = "Standing";
+	private String trainingStatus = "Standing";
     ArrayList<Instance> trainingSet = null;
-    ArrayList<Label.Activities> currentSession = null;
+    ArrayList<Label.Activities> tier1 = null;
+    ArrayList<Label.Activities> tier2 = null;
 
     @Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -38,32 +42,47 @@ public class MainActivity extends Activity implements SensorEventListener {
 		setContentView(R.layout.activity_main);
 		initializeViews();
 
-		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
-			// success! we have an accelerometer
-
-			accelerometer = sensorManager
-					.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-			sensorManager.registerListener(this, accelerometer,
-					SensorManager.SENSOR_DELAY_NORMAL);
-
-		} else {
-			// fail! we dont have an accelerometer!
-		}
-
-        currentSession = new ArrayList<Label.Activities>();
+        try {
+            initializeAcc();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 		try {
-			InputStream trainStream = getAssets().open("trainingSet.csv");
-			FileReader trainReader = new FileReader(trainStream);
-			trainingSet = trainReader.buildInstances();
+            trainingSet = loadTrainingSet("trainingSet.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+        tier1 = new ArrayList<Label.Activities>();
+        tier2 = new ArrayList<Label.Activities>();
 	}
 
-	public void initializeViews() {
+    private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
+        InputStream trainStream = getAssets().open(filename);
+        FileReader trainReader = new FileReader(trainStream);
+        return trainReader.buildInstances();
+    }
+
+    private void initializeAcc() throws Exception {
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
+            // success! we have an accelerometer
+
+            accelerometer = sensorManager
+                    .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            sensorManager.registerListener(this, accelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+
+        } else {
+            throw new Exception("No accelerometer found");
+        }
+    }
+
+    public void initializeViews() {
 		currentActivityLabel = (TextView) findViewById(R.id.currentActivityLabel);
+		totalQueueingTimeLabel = (TextView) findViewById(R.id.totalQueueingTimeLabel);
+		averageServiceTimeLabel = (TextView) findViewById(R.id.averageServiceTimeLabel);
 	}
 
 	// onResume() register the accelerometer for listening the events
@@ -97,22 +116,28 @@ public class MainActivity extends Activity implements SensorEventListener {
 		time = Math.round((now - starttime) / 1000000);
 
 		double magnitude = Math.sqrt(x * x + y * y + z * z);
-		data += status + "," + magnitude + "," + time + "\n";
+		data += trainingStatus + "," + magnitude + "," + time + "\n";
 
 		if (time > TIER_1_SAMPLING_TIME) {
-			currentSession.add(classify());
+			tier1.add(classify());
 			data = "";
 		}
 	}
 
-	public void startAcc(View view) {
+    public void start(View view) {
+        startAcc();
+        starttime = 0;
+
+        totalQueueingTimeLabel.setText("-");
+        averageServiceTimeLabel.setText("-");
+    }
+
+	public void startAcc() {
 		sensorManager.registerListener(this, accelerometer,
-				SensorManager.SENSOR_DELAY_NORMAL);
-		starttime = 0;
+                SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
 	public void save(View view) {
-
 		try {
 			File myFile = new File("/sdcard/mysdfile.txt");
 			myFile.createNewFile();
@@ -132,12 +157,12 @@ public class MainActivity extends Activity implements SensorEventListener {
 	}
 
 	public void change(View view) {
-		if (status.equals("Standing")) {
-			status = "Walking";
+		if (trainingStatus.equals("Standing")) {
+			trainingStatus = "Walking";
 			Button p1_button = (Button) findViewById(R.id.change);
 			p1_button.setText("Walking");
 		} else {
-			status = "Standing";
+			trainingStatus = "Standing";
 			Button p1_button = (Button) findViewById(R.id.change);
 			p1_button.setText("Standing");
 		}
@@ -178,12 +203,44 @@ public class MainActivity extends Activity implements SensorEventListener {
         return currentActivity;
 	}
 
-	public void stopAcc(View view) {
-		sensorManager.unregisterListener(this);
-		starttime = 0;
-        System.out.println("------LIST OF CLASSIFICATIONS------");
-        for (Label.Activities label : currentSession) {
-            System.out.println(label);
+    public void stop(View view) {
+        stopAcc();
+
+        int walking = 0, standing = 0;
+        int time = 0;
+        int processing = 0;
+        ActivityList activityList = new ActivityList();
+        for (Label.Activities tier1activity : tier1) {
+            time++;
+            processing++;
+            activityList.add(tier1activity, time);
+            switch(tier1activity) {
+                case Walking:
+                    walking++;
+                    break;
+                case Standing:
+                    standing++;
+                    break;
+                default: throw new IllegalArgumentException("UNKNOWN classification");
+            }
+            if (processing >= TIER_2_SAMPLING_TIME) {
+                Label.Activities tier2Activity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
+                tier2.add(tier2Activity);
+                processing = 0; walking = 0; standing = 0;
+            }
         }
+
+        System.out.println(activityList.toString());
+        totalQueueingTimeLabel.setText(activityList.totalQueueingTime() + "");
+        averageServiceTimeLabel.setText(activityList.averageServiceTime()+"");
+        System.out.println("------LIST OF CLASSIFICATIONS------");
+        System.out.println("Total walking: "+activityList.totalWalkingTime());
+        System.out.println("Total standing: "+activityList.totalStandingTime());
+        System.out.println("Walking periods: "+activityList.getWalkingPeriods());
+        System.out.println("Standing periods: "+activityList.getStandingPeriods());
+    }
+
+	public void stopAcc() {
+		sensorManager.unregisterListener(this);
 	}
 }

@@ -11,64 +11,106 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Live Accelerometer Data"
-        android:textSize="15dp" />
+        android:text="Current Activity"
+        android:gravity="center"
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/currentActivityLabel"
-        android:layout_width="331dp"
-        android:layout_height="302dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="10dp"
-        android:maxLines="20000"
-        android:scrollbars="vertical"
-        android:textColor="#000000"
-        android:textSize="15dp" />
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textSize="30sp" />
 
-    <RelativeLayout
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.12"
+        android:text="Total Queueing Time"
+        android:gravity="center"
+        android:textSize="15sp" />
+    <TextView
+        android:id="@+id/totalQueueingTimeLabel"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textSize="30sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Average Service Time"
+        android:gravity="center"
+        android:textSize="15sp" />
+    <TextView
+        android:id="@+id/averageServiceTimeLabel"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textSize="30sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:gravity="center"
         android:background="#ffffff"
-        android:orientation="horizontal" >
+        android:orientation="vertical" >
 
-        <Button
-            android:id="@+id/change"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:onClick="change"
-            android:text="Standing" />
+            android:gravity="center"
+            android:text="Activity recording"
+            android:textSize="20sp"/>
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
 
-        <Button
-            android:id="@+id/save"
+            <Button
+                android:id="@+id/start"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="start"
+                android:text="Start" />
+
+            <Button
+                android:id="@+id/stop"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="stop"
+                android:text="Stop" />
+        </LinearLayout>
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginLeft="21dp"
-            android:layout_toRightOf="@+id/change"
-            android:onClick="save"
-            android:text="Save" />
+            android:gravity="center"
+            android:text="Training tools"
+            android:textSize="20sp"/>
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <Button
+                android:id="@+id/change"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="change"
+                android:text="Standing" />
 
-        <Button
-            android:id="@+id/start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:onClick="startAcc"
-            android:text="Start" />
-
-        <Button
-            android:id="@+id/stop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/save"
-            android:layout_alignParentRight="true"
-            android:layout_marginLeft="30dp"
-            android:layout_toRightOf="@+id/start"
-            android:onClick="stopAcc"
-            android:text="Stop" />
-    </RelativeLayout>
+            <Button
+                android:id="@+id/save"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="save"
+                android:text="Save" />
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>
