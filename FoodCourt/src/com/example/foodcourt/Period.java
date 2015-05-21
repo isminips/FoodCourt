@@ -19,6 +19,11 @@ public class Period {
 
 	public int getStart() { return this.start; }
 	public int getEnd() { return this.end; }
+
+	/**
+	 * Start - end, inclusive (which explains +1)
+	 * @return
+	 */
 	public int getTime() { return 1+this.end - this.start; }
 
 	public void setStart(int start) {

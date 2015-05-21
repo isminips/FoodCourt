@@ -231,13 +231,18 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
 
         System.out.println(activityList.toString());
-        totalQueueingTimeLabel.setText(activityList.totalQueueingTime() + "");
-        averageServiceTimeLabel.setText(activityList.averageServiceTime()+"");
-        System.out.println("------LIST OF CLASSIFICATIONS------");
-        System.out.println("Total walking: "+activityList.totalWalkingTime());
-        System.out.println("Total standing: "+activityList.totalStandingTime());
-        System.out.println("Walking periods: "+activityList.getWalkingPeriods());
-        System.out.println("Standing periods: "+activityList.getStandingPeriods());
+        int totalQueueingTime = activityList.totalQueueingTime();
+        double averageServiceTime = activityList.averageServiceTime();
+        if (totalQueueingTime > 0) {
+            totalQueueingTimeLabel.setText(activityList.totalQueueingTime() + "");
+        } else {
+            totalQueueingTimeLabel.setText("Queueing not finished");
+        }
+        if (averageServiceTime > 0) {
+            averageServiceTimeLabel.setText(activityList.averageServiceTime() + "");
+        } else {
+            averageServiceTimeLabel.setText("Queueing not finished");
+        }
     }
 
 	public void stopAcc() {
