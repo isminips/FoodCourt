@@ -15,7 +15,7 @@
         android:textSize="15dp" />
 
     <TextView
-        android:id="@+id/test"
+        android:id="@+id/currentActivityLabel"
         android:layout_width="331dp"
         android:layout_height="302dp"
         android:layout_gravity="center"
@@ -55,10 +55,7 @@
             android:id="@+id/start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBaseline="@+id/clear"
-            android:layout_alignBottom="@+id/clear"
             android:layout_alignParentLeft="true"
-            android:layout_toLeftOf="@+id/save"
             android:onClick="startAcc"
             android:text="Start" />
 
@@ -66,30 +63,12 @@
             android:id="@+id/stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_above="@+id/read"
+            android:layout_above="@+id/save"
             android:layout_alignParentRight="true"
             android:layout_marginLeft="30dp"
-            android:layout_toRightOf="@+id/save"
+            android:layout_toRightOf="@+id/start"
             android:onClick="stopAcc"
             android:text="Stop" />
-
-        <Button
-            android:id="@+id/read"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/stop"
-            android:layout_alignParentBottom="true"
-            android:layout_alignRight="@+id/stop"
-            android:onClick="readfile"
-            android:text="Read" />
-
-        <Button
-            android:id="@+id/clear"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/save"
-            android:layout_alignLeft="@+id/save"
-            android:text="Clear" />
     </RelativeLayout>
 
 </LinearLayout>
