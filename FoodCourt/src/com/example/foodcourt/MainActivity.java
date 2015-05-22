@@ -11,10 +11,12 @@ import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -53,11 +55,12 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
     ArrayList<Label.Activities> tier2 = null;
 	Cloud particleCloud;
 
-	@Override
+    @Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		initializeViews();
+
 
         try {
             initializeAcc();
@@ -164,7 +167,7 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
 
 	public void startAcc() {
 		sensorManager.registerListener(this, accelerometer,
-                SensorManager.SENSOR_DELAY_NORMAL);
+				SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
 	public void save(View view) {
@@ -277,4 +280,11 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
 	public void stopAcc() {
 		sensorManager.unregisterListener(this);
 	}
+
+	public void startWifi(View view) {
+		Intent intent = new Intent(this, WifiActivity.class);
+		startActivity(intent);
+		System.out.print("inside startwifi");
+	}
+
 }
