@@ -1,5 +1,7 @@
 package com.example.foodcourt;
 
+import com.example.foodcourt.knn.Label;
+
 import java.util.ArrayList;
 
 public class ActivityList {

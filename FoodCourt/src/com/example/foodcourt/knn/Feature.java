@@ -1,4 +1,4 @@
-package com.example.foodcourt;
+package com.example.foodcourt.knn;
 
 public abstract class Feature {
 	private String name;

@@ -1,8 +1,8 @@
-package com.example.foodcourt;
+package com.example.foodcourt.knn;
 
 public class Label extends Feature {
 
-	enum Activities {
+	public enum Activities {
 		Standing,
 		Walking
 	}

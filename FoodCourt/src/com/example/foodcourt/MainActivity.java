@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
@@ -20,11 +21,26 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements SensorEventListener {
+import com.example.foodcourt.knn.FileReader;
+import com.example.foodcourt.knn.Instance;
+import com.example.foodcourt.knn.Knn;
+import com.example.foodcourt.knn.Label;
+import com.example.foodcourt.knn.Neighbor;
+import com.example.foodcourt.particles.Cloud;
+import com.example.foodcourt.particles.InertialPoint;
+import com.example.foodcourt.particles.Particle;
+import com.example.foodcourt.particles.ParticleFilter;
+import com.example.foodcourt.particles.Point;
+import com.example.foodcourt.particles.Thresholds;
+
+public class MainActivity extends BaseActivity implements SensorEventListener {
 
     private final int TIER_1_SAMPLING_TIME = 1000;
     private final int TIER_2_SAMPLING_TIME = 2;
-    private SensorManager sensorManager;
+	private final int NUMBER_PARTICLES = 100;
+	private final double CLOUD_RANGE = 0.1;
+	private final double CLOUD_DISPLACEMENT = 0.3;
+	private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
 	private TextView averageServiceTimeLabel;
@@ -35,8 +51,9 @@ public class MainActivity extends Activity implements SensorEventListener {
     ArrayList<Instance> trainingSet = null;
     ArrayList<Label.Activities> tier1 = null;
     ArrayList<Label.Activities> tier2 = null;
+	Cloud particleCloud;
 
-    @Override
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
@@ -56,6 +73,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         tier1 = new ArrayList<Label.Activities>();
         tier2 = new ArrayList<Label.Activities>();
+
+		Point estimatedPosition = new Point(0,0);
+		List<Particle> particles = ParticleFilter.createParticles(estimatedPosition, NUMBER_PARTICLES);
+		particleCloud = new Cloud(estimatedPosition, particles);
 	}
 
     private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
@@ -121,10 +142,19 @@ public class MainActivity extends Activity implements SensorEventListener {
 		if (time > TIER_1_SAMPLING_TIME) {
 			tier1.add(classify());
 			data = "";
+
+			updateParticleCloud();
 		}
 	}
 
-    public void start(View view) {
+	private void updateParticleCloud() {
+		particleCloud = ParticleFilter.filter(particleCloud, new Point(0, 0), new InertialPoint(new Point(0, 0)), NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, Thresholds.boundaries(), Thresholds.particleCreation());
+		for(Particle p : particleCloud.getParticles()) {
+			log(p.toString());
+		}
+	}
+
+	public void start(View view) {
         startAcc();
         starttime = 0;
 
@@ -146,9 +176,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 			myOutWriter.append(data);
 			myOutWriter.close();
 			fOut.close();
-			Toast.makeText(getBaseContext(), "Done writing file in SD",
-					Toast.LENGTH_SHORT).show();
-			System.out.println(data);
+			toast("Done writing file in SD");
+			log(data);
 		} catch (Exception e) {
 			Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_SHORT)
 					.show();
@@ -184,7 +213,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 		do {
 			classificationInstance = newInstances.remove(0);
 
-			distances = Knn.calculateDistances(trainingSet,	classificationInstance);
+			distances = Knn.calculateDistances(trainingSet, classificationInstance);
 			neighbors = Knn.getNearestNeighbors(distances);
 			classification = Knn.determineMajority(neighbors);
 
@@ -198,7 +227,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 		Label.Activities currentActivity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
 		currentActivityLabel.setText(currentActivity.toString());
 
-        System.out.println("Current activity: "+currentActivity.toString());
+        log("Current activity: "+currentActivity.toString());
 
         return currentActivity;
 	}
@@ -230,7 +259,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         }
 
-        System.out.println(activityList.toString());
+        log(activityList.toString());
         int totalQueueingTime = activityList.totalQueueingTime();
         double averageServiceTime = activityList.averageServiceTime();
         if (totalQueueingTime > 0) {

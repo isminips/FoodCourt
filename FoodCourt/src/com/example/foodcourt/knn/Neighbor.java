@@ -1,4 +1,4 @@
-package com.example.foodcourt;
+package com.example.foodcourt.knn;
 
 public class Neighbor {
 	private Instance instance;
