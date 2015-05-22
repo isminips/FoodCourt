@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Created by isminipsychoula on 5/22/15.
  */
-public class WifiActivity extends Activity {
+public class WifiActivity extends BaseActivity {
     WifiManager mainWifiObj;
     WifiScanReceiver wifiReciever;
     ListView list;
@@ -59,9 +59,9 @@ public class WifiActivity extends Activity {
 
             List<ScanResult> wifiScanList = mainWifiObj.getScanResults();
             wifis = new String[wifiScanList.size()];
-            ArrayList<String> results = new ArrayList<>();
+            ArrayList<String> results = new ArrayList<String>();
 
-            ArrayList<String> screenResults = new ArrayList<>();
+            ArrayList<String> screenResults = new ArrayList<String>();
 //                for(int i = 0; i < wifiScanList.size(); i++){
 //                    wifis[i] = ((wifiScanList.get(i)).toString());
 //
@@ -80,7 +80,7 @@ public class WifiActivity extends Activity {
 //                        android.R.layout.simple_list_item_1, screenResults));
 
             Context context = rssiListView.getContext();
-            ArrayAdapter resultsAdapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, screenResults);
+            ArrayAdapter resultsAdapter = new ArrayAdapter<String>(context, android.R.layout.simple_list_item_1, screenResults);
             rssiListView.setAdapter(resultsAdapter);
         }
     }

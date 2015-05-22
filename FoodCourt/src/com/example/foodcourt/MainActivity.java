@@ -9,19 +9,17 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.foodcourt.knn.FileReader;
 import com.example.foodcourt.knn.Instance;
@@ -34,31 +32,31 @@ import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
 import com.example.foodcourt.particles.Point;
 import com.example.foodcourt.particles.Thresholds;
+import com.example.foodcourt.particles.Visualisation;
 
 public class MainActivity extends BaseActivity implements SensorEventListener {
 
     private final int TIER_1_SAMPLING_TIME = 1000;
     private final int TIER_2_SAMPLING_TIME = 2;
 	private final int NUMBER_PARTICLES = 100;
-	private final double CLOUD_RANGE = 0.1;
-	private final double CLOUD_DISPLACEMENT = 0.3;
+	private final double CLOUD_RANGE = 0.5;
+	private final double CLOUD_DISPLACEMENT = 1;
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
-	private TextView averageServiceTimeLabel;
-	private TextView totalQueueingTimeLabel;
-	private String data = "";
-	private float starttime = 0;
-	private String trainingStatus = "Standing";
+	private String data;
+	private float starttime;
+	private ActivityList activityList;
+	private Label.Activities trainingStatus = Label.Activities.Standing;
     ArrayList<Instance> trainingSet = null;
     ArrayList<Label.Activities> tier1 = null;
     ArrayList<Label.Activities> tier2 = null;
 	Cloud particleCloud;
+	private Visualisation visualisation;
 
     @Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
 		initializeViews();
 
 
@@ -74,53 +72,47 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
 			e.printStackTrace();
 		}
 
-        tier1 = new ArrayList<Label.Activities>();
-        tier2 = new ArrayList<Label.Activities>();
+		try {
+			Drawable floorPlan = Drawable.createFromStream(getAssets().open("floorPlan.png"), null);
+			visualisation.setFloorPlan(floorPlan);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		Point estimatedPosition = new Point(0,0);
-		List<Particle> particles = ParticleFilter.createParticles(estimatedPosition, NUMBER_PARTICLES);
-		particleCloud = new Cloud(estimatedPosition, particles);
+		initializeParticleCloud();
+		reset();
 	}
 
-    private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
+	private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
         InputStream trainStream = getAssets().open(filename);
         FileReader trainReader = new FileReader(trainStream);
         return trainReader.buildInstances();
     }
 
-    private void initializeAcc() throws Exception {
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
-            // success! we have an accelerometer
-
-            accelerometer = sensorManager
-                    .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            sensorManager.registerListener(this, accelerometer,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-
-        } else {
-            throw new Exception("No accelerometer found");
-        }
-    }
-
     public void initializeViews() {
+		setContentView(R.layout.activity_main);
 		currentActivityLabel = (TextView) findViewById(R.id.currentActivityLabel);
-		totalQueueingTimeLabel = (TextView) findViewById(R.id.totalQueueingTimeLabel);
-		averageServiceTimeLabel = (TextView) findViewById(R.id.averageServiceTimeLabel);
+		visualisation = (Visualisation) findViewById(R.id.view);
+	}
+
+	private void reset() {
+		data = "";
+		starttime = 0;
+		activityList = new ActivityList();
+		tier1 = new ArrayList<Label.Activities>();
+		tier2 = new ArrayList<Label.Activities>();
 	}
 
 	// onResume() register the accelerometer for listening the events
 	protected void onResume() {
 		super.onResume();
-		sensorManager.registerListener(this, accelerometer,
-				SensorManager.SENSOR_DELAY_NORMAL);
-
+		startAcc();
 	}
 
 	// onPause() unregister the accelerometer for stop listening the events
 	protected void onPause() {
 		super.onPause();
-		sensorManager.unregisterListener(this);
+		stopAcc();
 	}
 
 	@Override
@@ -140,7 +132,7 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
 		time = Math.round((now - starttime) / 1000000);
 
 		double magnitude = Math.sqrt(x * x + y * y + z * z);
-		data += trainingStatus + "," + magnitude + "," + time + "\n";
+		data += trainingStatus.toString() + "," + magnitude + "," + time + "\n";
 
 		if (time > TIER_1_SAMPLING_TIME) {
 			tier1.add(classify());
@@ -150,56 +142,87 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
 		}
 	}
 
-	private void updateParticleCloud() {
-		particleCloud = ParticleFilter.filter(particleCloud, new Point(0, 0), new InertialPoint(new Point(0, 0)), NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, Thresholds.boundaries(), Thresholds.particleCreation());
-		for(Particle p : particleCloud.getParticles()) {
-			log(p.toString());
-		}
+	// PARTICLE CLOUD
+	private void initializeParticleCloud() {
+		Point estimatedPosition = new Point(0,0);
+		List<Particle> particles = ParticleFilter.createParticles(estimatedPosition, NUMBER_PARTICLES);
+		particleCloud = new Cloud(estimatedPosition, particles);
 	}
 
-	public void start(View view) {
-        startAcc();
-        starttime = 0;
+	private void updateParticleCloud() {
+		Point oldInerPoint = particleCloud.getInerPoint();
+		// For now, move the cloud by +1X
+		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), new InertialPoint(new Point(oldInerPoint.getX() + 1, oldInerPoint.getY())), NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, Thresholds.boundaries(), Thresholds.particleCreation());
+		/*for(Particle p : particleCloud.getParticles()) {
+			log(p.toString());
+		}*/
+		log(particleCloud.getEstiPos().toString() + " (average over " + particleCloud.getParticles().size() + " particles)");
+	}
 
-        totalQueueingTimeLabel.setText("-");
-        averageServiceTimeLabel.setText("-");
-    }
+	// BUTTONS
+	public void start(View view) {
+		Button btn = (Button) findViewById(R.id.startstop);
+		btn.setText("Stop");
+		btn.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				stop(v);
+			}
+		});
+
+        startAcc();
+	}
+
+	public void stop(View view) {
+		Button btn = (Button) findViewById(R.id.startstop);
+		btn.setText("Start");
+		btn.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				start(v);
+			}
+		});
+
+		stopAcc();
+
+		calculateTimes();
+	}
+
+	public void clear(View view) {
+		reset();
+	}
+
+	public void startWifi(View view) {
+		Intent intent = new Intent(this, WifiActivity.class);
+		startActivity(intent);
+	}
+
+	// ACCELEROMETER
+	private void initializeAcc() throws Exception {
+		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
+			// success! we have an accelerometer
+
+			accelerometer = sensorManager
+					.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+			sensorManager.registerListener(this, accelerometer,
+					SensorManager.SENSOR_DELAY_NORMAL);
+
+		} else {
+			throw new Exception("No accelerometer found");
+		}
+	}
 
 	public void startAcc() {
 		sensorManager.registerListener(this, accelerometer,
 				SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
-	public void save(View view) {
-		try {
-			File myFile = new File("/sdcard/mysdfile.txt");
-			myFile.createNewFile();
-			FileOutputStream fOut = new FileOutputStream(myFile);
-			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-			myOutWriter.append(data);
-			myOutWriter.close();
-			fOut.close();
-			toast("Done writing file in SD");
-			log(data);
-		} catch (Exception e) {
-			Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_SHORT)
-					.show();
-		}
-
+	public void stopAcc() {
+		sensorManager.unregisterListener(this);
 	}
 
-	public void change(View view) {
-		if (trainingStatus.equals("Standing")) {
-			trainingStatus = "Walking";
-			Button p1_button = (Button) findViewById(R.id.change);
-			p1_button.setText("Walking");
-		} else {
-			trainingStatus = "Standing";
-			Button p1_button = (Button) findViewById(R.id.change);
-			p1_button.setText("Standing");
-		}
-	}
-
+	// CLASSIFICATION
 	public Label.Activities classify() {
 		starttime = 0;
 
@@ -230,61 +253,75 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
 		Label.Activities currentActivity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
 		currentActivityLabel.setText(currentActivity.toString());
 
-        log("Current activity: "+currentActivity.toString());
+		log("Current activity: " + currentActivity.toString());
 
-        return currentActivity;
+		return currentActivity;
 	}
 
-    public void stop(View view) {
-        stopAcc();
+	private void calculateTimes() {
+		int walking = 0, standing = 0;
+		int time = 0;
+		int processing = 0;
+		activityList = new ActivityList();
+		for (Label.Activities tier1activity : tier1) {
+			time++;
+			processing++;
+			activityList.add(tier1activity, time);
+			switch(tier1activity) {
+				case Walking:
+					walking++;
+					break;
+				case Standing:
+					standing++;
+					break;
+				default: throw new IllegalArgumentException("UNKNOWN classification");
+			}
+			if (processing >= TIER_2_SAMPLING_TIME) {
+				Label.Activities tier2Activity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
+				tier2.add(tier2Activity);
+				processing = 0; walking = 0; standing = 0;
+			}
+		}
 
-        int walking = 0, standing = 0;
-        int time = 0;
-        int processing = 0;
-        ActivityList activityList = new ActivityList();
-        for (Label.Activities tier1activity : tier1) {
-            time++;
-            processing++;
-            activityList.add(tier1activity, time);
-            switch(tier1activity) {
-                case Walking:
-                    walking++;
-                    break;
-                case Standing:
-                    standing++;
-                    break;
-                default: throw new IllegalArgumentException("UNKNOWN classification");
-            }
-            if (processing >= TIER_2_SAMPLING_TIME) {
-                Label.Activities tier2Activity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
-                tier2.add(tier2Activity);
-                processing = 0; walking = 0; standing = 0;
-            }
-        }
-
-        log(activityList.toString());
-        int totalQueueingTime = activityList.totalQueueingTime();
-        double averageServiceTime = activityList.averageServiceTime();
-        if (totalQueueingTime > 0) {
-            totalQueueingTimeLabel.setText(activityList.totalQueueingTime() + "");
-        } else {
-            totalQueueingTimeLabel.setText("Queueing not finished");
-        }
-        if (averageServiceTime > 0) {
-            averageServiceTimeLabel.setText(activityList.averageServiceTime() + "");
-        } else {
-            averageServiceTimeLabel.setText("Queueing not finished");
-        }
-    }
-
-	public void stopAcc() {
-		sensorManager.unregisterListener(this);
+		log(activityList.toString());
+		int totalQueueingTime = activityList.totalQueueingTime();
+		double averageServiceTime = activityList.averageServiceTime();
+		if (totalQueueingTime > 0 && averageServiceTime > 0) {
+			showInfo("Queueing information",
+					"Total queueing time: " + activityList.totalQueueingTime() + "\n" +
+							"Average service time: " + activityList.averageServiceTime());
+		} else {
+			showInfo("Queueing not finished", "Please try again");
+		}
 	}
 
-	public void startWifi(View view) {
-		Intent intent = new Intent(this, WifiActivity.class);
-		startActivity(intent);
-		System.out.print("inside startwifi");
+	// CREATE TRAINING DATA
+	public void save(View view) {
+		try {
+			File myFile = new File("/sdcard/mysdfile.txt");
+			myFile.createNewFile();
+			FileOutputStream fOut = new FileOutputStream(myFile);
+			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+			myOutWriter.append(data);
+			myOutWriter.close();
+			fOut.close();
+			toast("Done writing file in SD");
+			log(data);
+		} catch (Exception e) {
+			toast(e.getMessage());
+		}
+
+	}
+
+	public void changeLoggingActivity(View view) {
+		if (trainingStatus == Label.Activities.Standing) {
+			trainingStatus = Label.Activities.Walking;
+		} else {
+			trainingStatus = Label.Activities.Walking;
+		}
+
+		Button p1_button = (Button) findViewById(R.id.change);
+		p1_button.setText(trainingStatus.toString());
 	}
 
 }
