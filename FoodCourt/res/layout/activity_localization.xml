@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:background="#ffffff"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingTop="10dp" >
+
+    <view android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5"
+        class="com.example.foodcourt.particles.Visualisation" android:id="@+id/view"/>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <Button
+            android:id="@+id/initial_pa"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="fill_parent"
+            android:onClick="initializePA"
+            android:text="Initial Belief PA" />
+        <Button
+            android:id="@+id/initial_bayes"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="fill_parent"
+            android:onClick="initializeBayes"
+            android:text="Initial Belief Bayes" />
+        <Button
+            android:id="@+id/sense_bayes"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="fill_parent"
+            android:onClick="senseBayes"
+            android:text="Sense Bayes" />
+    </LinearLayout>
+
+</LinearLayout>

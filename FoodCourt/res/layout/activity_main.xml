@@ -8,99 +8,28 @@
     android:orientation="vertical"
     android:paddingTop="10dp" >
 
-    <LinearLayout
+    <Button
+        android:id="@+id/activity_monitoring"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
-        <Button
-            android:id="@+id/wifi"
-            android:layout_width="0dp"
-            android:layout_weight="2"
-            android:layout_height="fill_parent"
-            android:onClick="startWifi"
-            android:text="Wifi" />
+        android:layout_weight="1"
+        android:onClick="startActivityMonitoring"
+        android:text="Activity Monitoring" />
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:text="Current Activity"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:textSize="15sp" />
-        <TextView
-            android:id="@+id/currentActivityLabel"
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:textSize="15sp" />
-    </LinearLayout>
-
-    <view android:layout_width="fill_parent"
+    <Button
+        android:id="@+id/localization"
+        android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight="5"
-        class="com.example.foodcourt.particles.Visualisation" android:id="@+id/view"/>
+        android:layout_weight="1"
+        android:onClick="startLocalization"
+        android:text="Localization" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/wifi"
+        android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"
-        android:gravity="center"
-        android:background="#ffffff"
-        android:orientation="vertical" >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Activity recording"
-            android:textSize="20sp"/>
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content">
-
-            <Button
-                android:id="@+id/startstop"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="stop"
-                android:text="Stop" />
-
-            <Button
-                android:id="@+id/clear"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="clear"
-                android:text="Clear" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Training tools"
-            android:textSize="20sp"/>
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content">
-            <Button
-                android:id="@+id/change"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="changeLoggingActivity"
-                android:text="Standing" />
-
-            <Button
-                android:id="@+id/save"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="save"
-                android:text="Save" />
-        </LinearLayout>
-    </LinearLayout>
+        android:layout_weight="1"
+        android:onClick="startWifi"
+        android:text="Wifi" />
 
 </LinearLayout>
