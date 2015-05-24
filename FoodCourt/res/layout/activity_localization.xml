@@ -2,21 +2,19 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="center"
     android:background="#ffffff"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:paddingTop="10dp" >
+    android:orientation="vertical">
 
-    <view android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="5"
-        class="com.example.foodcourt.particles.Visualisation" android:id="@+id/view"/>
+    <view
+        android:id="@+id/view"
+        android:layout_width="fill_parent"
+        android:layout_height="250dp"
+        class="com.example.foodcourt.particles.Visualisation"/>
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="50dp"
+        android:orientation="horizontal">
         <Button
             android:id="@+id/initial_pa"
             android:layout_width="0dp"

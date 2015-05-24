@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.Collection;
+
 public class BaseActivity extends Activity {
 
 	private Toast t;
@@ -45,6 +47,13 @@ public class BaseActivity extends Activity {
 
 	protected void log(String message) {
 		System.out.println(message);
+	}
+
+	protected void logCollection(Iterable collection, String title, String message) {
+		System.out.println(title);
+		for(Object o : collection) {
+			System.out.println(message + o.toString());
+		}
 	}
 
 	protected void close(View v) {

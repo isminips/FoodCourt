@@ -2,32 +2,44 @@ package com.example.foodcourt;
 
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 
-import com.example.foodcourt.knn.FileReader;
-import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.particles.Cloud;
 import com.example.foodcourt.particles.InertialPoint;
 import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
 import com.example.foodcourt.particles.Point;
+import com.example.foodcourt.particles.RoomInfo;
 import com.example.foodcourt.particles.Thresholds;
 import com.example.foodcourt.particles.Visualisation;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class LocalizationActivity extends BaseActivity {
 
-    private final int NUMBER_PARTICLES = 100;
+	private final int NUMBER_PARTICLES = 5000;
 	private final double CLOUD_RANGE = 0.5;
-	private final double CLOUD_DISPLACEMENT = 1;
-	Cloud particleCloud;
+	private final double CLOUD_DISPLACEMENT = 0.2;
+	private final Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
+	private Cloud particleCloud;
 	private Visualisation visualisation;
+	private HashMap<String, RoomInfo> roomInfo;
+	double totalArea = 0;
 
-    @Override
+	private final Handler particleUpdater = new Handler();
+	final int PARTICLE_UPDATE_DELAY = 1000; //milliseconds
+	final Runnable particleUpdate = new Runnable() {
+		public void run() {
+			updateParticleCloud();
+			particleUpdater.postDelayed(this, PARTICLE_UPDATE_DELAY);
+		}
+	};
+
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		initializeViews();
@@ -35,6 +47,15 @@ public class LocalizationActivity extends BaseActivity {
 		try {
 			Drawable floorPlan = Drawable.createFromStream(getAssets().open("floorPlan.png"), null);
 			visualisation.setFloorPlan(floorPlan);
+			visualisation.setTotalDrawSize(TOTAL_DRAW_SIZE);
+
+			roomInfo = RoomInfo.load(getAssets().open("RoomInfo.csv"));
+			for(RoomInfo r : roomInfo.values()) {
+				r.makeDrawArea(visualisation.getScreenSize(), TOTAL_DRAW_SIZE);
+				totalArea += r.getArea();
+			}
+
+			visualisation.setRooms(roomInfo.values());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -42,47 +63,40 @@ public class LocalizationActivity extends BaseActivity {
 		initializeParticleCloud();
 	}
 
-	private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
-        InputStream trainStream = getAssets().open(filename);
-        FileReader trainReader = new FileReader(trainStream);
-        return trainReader.buildInstances();
-    }
-
-    public void initializeViews() {
+	public void initializeViews() {
 		setContentView(R.layout.activity_localization);
 		visualisation = (Visualisation) findViewById(R.id.view);
 	}
 
-	// onResume() register the accelerometer for listening the events
-	protected void onResume() {
-		super.onResume();
-	}
-
-	// onPause() unregister the accelerometer for stop listening the events
-	protected void onPause() {
-		super.onPause();
-	}
-
 	// PARTICLE CLOUD
 	private void initializeParticleCloud() {
-		Point estimatedPosition = new Point(0,0);
-		List<Particle> particles = ParticleFilter.createParticles(estimatedPosition, NUMBER_PARTICLES);
-		particleCloud = new Cloud(estimatedPosition, particles);
+		Point mapCenter = new Point(36,7.15);
+
+		List<Particle> particles = new ArrayList<Particle>();
+		for(RoomInfo room : roomInfo.values()) {
+			particles.addAll(room.fillWithParticles(totalArea, NUMBER_PARTICLES));
+		}
+		particleCloud = new Cloud(mapCenter, particles);
+
+		visualisation.setParticles(particleCloud.getParticles());
+
+		particleUpdater.removeCallbacks(particleUpdate);
+		particleUpdater.postDelayed(particleUpdate, PARTICLE_UPDATE_DELAY);
 	}
 
 	private void updateParticleCloud() {
 		Point oldInerPoint = particleCloud.getInerPoint();
+
 		// For now, move the cloud by +1X
 		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), new InertialPoint(new Point(oldInerPoint.getX() + 1, oldInerPoint.getY())), NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, Thresholds.boundaries(), Thresholds.particleCreation());
-		/*for(Particle p : particleCloud.getParticles()) {
-			log(p.toString());
-		}*/
+		visualisation.setParticles(particleCloud.getParticles());
+
 		log(particleCloud.getEstiPos().toString() + " (average over " + particleCloud.getParticles().size() + " particles)");
 	}
 
 	// BUTTONS
 	public void initializePA(View view) {
-
+		initializeParticleCloud();
 	}
 
 	public void initializeBayes(View view) {
