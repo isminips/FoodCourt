@@ -3,6 +3,7 @@ package com.example.foodcourt;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.KeyEvent;
 import android.view.View;
 
 import com.example.foodcourt.particles.Cloud;
@@ -22,9 +23,9 @@ import java.util.List;
 public class LocalizationActivity extends BaseActivity {
 
 	private final int NUMBER_PARTICLES = 5000;
-	private final double CLOUD_RANGE = 0.5;
+	private final double CLOUD_RANGE = 72;
 	private final double CLOUD_DISPLACEMENT = 0.2;
-	private final Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
+	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
 	private Cloud particleCloud;
 	private Visualisation visualisation;
 	private HashMap<String, RoomInfo> roomInfo;
@@ -63,6 +64,25 @@ public class LocalizationActivity extends BaseActivity {
 		initializeParticleCloud();
 	}
 
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		stop();
+	}
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event)
+	{
+		if ((keyCode == KeyEvent.KEYCODE_BACK))
+		{
+			stop();
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+
+	private void stop() {
+		stopParticleCloud();
+	}
+
 	public void initializeViews() {
 		setContentView(R.layout.activity_localization);
 		visualisation = (Visualisation) findViewById(R.id.view);
@@ -80,18 +100,22 @@ public class LocalizationActivity extends BaseActivity {
 
 		visualisation.setParticles(particleCloud.getParticles());
 
-		particleUpdater.removeCallbacks(particleUpdate);
+		stopParticleCloud();
 		particleUpdater.postDelayed(particleUpdate, PARTICLE_UPDATE_DELAY);
+	}
+
+	private void stopParticleCloud() {
+		particleUpdater.removeCallbacks(particleUpdate);
 	}
 
 	private void updateParticleCloud() {
 		Point oldInerPoint = particleCloud.getInerPoint();
 
 		// For now, move the cloud by +1X
-		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), new InertialPoint(new Point(oldInerPoint.getX() + 1, oldInerPoint.getY())), NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, Thresholds.boundaries(), Thresholds.particleCreation());
+		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), new InertialPoint(new Point(oldInerPoint.getX() + 1, oldInerPoint.getY())), NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, roomInfo);
 		visualisation.setParticles(particleCloud.getParticles());
 
-		log(particleCloud.getEstiPos().toString() + " (average over " + particleCloud.getParticles().size() + " particles)");
+		log(particleCloud.getEstiPos().toString(3) + " " + particleCloud.getParticleCount());
 	}
 
 	// BUTTONS

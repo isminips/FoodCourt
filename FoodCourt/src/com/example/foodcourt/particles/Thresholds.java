@@ -34,10 +34,10 @@ public class Thresholds {
      */
     public static EnumMap<Threshold, Integer> particleCreation() {
         EnumMap<Threshold, Integer> particleCreation = new EnumMap<Threshold, Integer>(Threshold.class);
-        particleCreation.put(Threshold.UPPER, 4);
-        particleCreation.put(Threshold.MID, 3);
-        particleCreation.put(Threshold.LOWER, 2);
-        particleCreation.put(Threshold.BASE, 1);        
+        particleCreation.put(Threshold.UPPER, 3);
+        particleCreation.put(Threshold.MID, 2);
+        particleCreation.put(Threshold.LOWER, 1);
+        particleCreation.put(Threshold.BASE, 0);
         return particleCreation;
     }
 }

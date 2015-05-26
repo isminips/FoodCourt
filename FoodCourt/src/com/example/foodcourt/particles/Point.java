@@ -152,6 +152,17 @@ public class Point {
     }
 
     /**
+     * String representation of the object.
+     *
+     * @param decimals Number of decimals
+     * @return
+     */
+    public String toString(int decimals) {
+        double t = Math.pow(10,decimals);
+        return ((double)Math.round(x * t)/t) + "," + ((double)Math.round(y * t)/t);
+    }
+
+    /**
      * Scale coordinates by ratio of pixels.
      *
      * @param xPixels x-coordinate pixel ratio.

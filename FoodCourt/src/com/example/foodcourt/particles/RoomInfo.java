@@ -190,4 +190,17 @@ public class RoomInfo {
 
         return roomInfo;
     }
+
+    public double getBorderProximity(Particle particle) {
+        double maxDist, dist;
+        if (width < height) {
+            maxDist = width/2;
+            dist = Math.min(particle.x - positionX, positionX+width - particle.x);
+        } else {
+            maxDist = height/2;
+            dist = Math.min(particle.y - positionY, positionY+height - particle.y);
+        }
+
+        return dist / maxDist;
+    }
 }

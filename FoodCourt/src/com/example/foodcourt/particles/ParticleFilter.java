@@ -1,7 +1,10 @@
 package com.example.foodcourt.particles;
 
+import com.example.foodcourt.LocalizationActivity;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.TreeSet;
@@ -12,10 +15,12 @@ import java.util.TreeSet;
  */
 public class ParticleFilter {
 
-    public static Cloud filter(Cloud cloud, Point posProba, InertialPoint inertialPoint, double particleCount, double cloudRange, double cloudDisplacement, EnumMap<Threshold, Float> boundaries, EnumMap<Threshold, Integer> particleCreation) {
+    public static Cloud filter(Cloud cloud, Point posProba, InertialPoint inertialPoint, double particleCount, double cloudRange, double cloudDisplacement, HashMap<String, RoomInfo> rooms) {
+        EnumMap<Threshold, Float> boundaries            = Thresholds.boundaries();
+        EnumMap<Threshold, Integer> particleCreation    = Thresholds.particleCreation();
 
         // Weight calculus
-        List<Particle> weightList = weightCloud(cloud.getParticles(), posProba, particleCount, cloudRange);
+        List<Particle> weightList = weightCloud(cloud.getParticles(), posProba, particleCount, cloudRange, rooms);
 
         // Resample
         List<Particle> reSampleList = reSample(weightList, boundaries, particleCreation);
@@ -33,14 +38,24 @@ public class ParticleFilter {
         return new Cloud(estiPosPart, newRandomCloudList, inertialPoint.getPoint());
     }
 
-    private static List<Particle> weightCloud(List<Particle> particles, Point posProba, double particleCount, double cloudRange) throws NullPointerException {
+    private static List<Particle> weightCloud(List<Particle> particles, Point posProba, double particleCount, double cloudRange, HashMap<String, RoomInfo> rooms) throws NullPointerException {
 
         TreeSet<Particle> sortedList = new TreeSet<Particle>();
         List<Particle> finalList = new ArrayList<Particle>();
 
         // We sort particles by weight
         for (Particle particle : particles) {
-            particle.weight = ParticleFilter.weight(posProba, particle, cloudRange);
+            if (particle.x < 0 || particle.y < 0 || particle.x > LocalizationActivity.TOTAL_DRAW_SIZE.getX() || particle.y > LocalizationActivity.TOTAL_DRAW_SIZE.getY()) {
+                continue;
+            }
+
+            for (RoomInfo room : rooms.values()) {
+                if (room.containsLocation(particle.getPoint()))
+                    particle.weight = room.getBorderProximity(particle);
+            }
+
+            particle.weight *= ParticleFilter.weight(posProba, particle);
+
             sortedList.add(particle);
         }
         // We take only the PARTICLE_MAX first particles
@@ -151,12 +166,8 @@ public class ParticleFilter {
     }
 
     //  Weight
-    private static double weight(Point estiPos, Particle partPos, double cloudRange) {
-
-        double a = Math.pow((distance(estiPos, partPos)), 2);
-        double b = -a * cloudRange;
-
-        return Math.exp(b);
+    private static double weight(Point estiPos, Particle partPos) {
+        return (LocalizationActivity.TOTAL_DRAW_SIZE.getX() - distance(estiPos, partPos)) / LocalizationActivity.TOTAL_DRAW_SIZE.getX();
     }
 
 }
