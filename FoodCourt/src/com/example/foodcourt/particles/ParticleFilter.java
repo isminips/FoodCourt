@@ -50,11 +50,12 @@ public class ParticleFilter {
             }
 
             for (RoomInfo room : rooms.values()) {
-                if (room.containsLocation(particle.getPoint()))
+                if (room.containsLocation(particle.getPoint())) {
                     particle.weight = room.getBorderProximity(particle);
+                }
             }
 
-            particle.weight *= ParticleFilter.weight(posProba, particle);
+            //particle.weight *= ParticleFilter.weight(posProba, particle);
 
             sortedList.add(particle);
         }
@@ -97,6 +98,8 @@ public class ParticleFilter {
             particle.x += xDisplacement;
             particle.y += yDisplacement;
         }
+
+        System.out.println("Movement: X:"+xDisplacement+" Y:"+yDisplacement);
 
         return particles;
     }
@@ -159,15 +162,20 @@ public class ParticleFilter {
 
     // Distance between testPos/estiPos
     private static double distance(Point pos1, Particle pos2) {
-        double distX = pos1.getX() - pos2.x;
-        double distY = pos1.getY() - pos2.y;
+        return distance(pos1, pos2.getPoint());
+    }
+    // Distance between testPos/estiPos
+    private static double distance(Point pos1, Point pos2) {
+        double distX = pos1.getX() - pos2.getX();
+        double distY = pos1.getY() - pos2.getY();
 
         return Math.hypot(distX, distY);
     }
 
     //  Weight
     private static double weight(Point estiPos, Particle partPos) {
-        return (LocalizationActivity.TOTAL_DRAW_SIZE.getX() - distance(estiPos, partPos)) / LocalizationActivity.TOTAL_DRAW_SIZE.getX();
+        double maxDist = distance(LocalizationActivity.TOTAL_DRAW_SIZE, new Point(0,0));
+        return (maxDist - distance(estiPos, partPos)) / maxDist;
     }
 
 }

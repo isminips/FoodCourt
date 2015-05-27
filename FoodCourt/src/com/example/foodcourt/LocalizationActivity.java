@@ -17,6 +17,7 @@ import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
 import com.example.foodcourt.particles.Point;
 import com.example.foodcourt.particles.RoomInfo;
+import com.example.foodcourt.particles.Sensors;
 import com.example.foodcourt.particles.Visualisation;
 
 import java.io.IOException;
@@ -24,13 +25,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class LocalizationActivity extends BaseActivity implements SensorEventListener {
+public class LocalizationActivity extends BaseActivity {
 
-	private static final boolean IS_ORIENTATION_MERGED = true;
-	private static final int SPEEDBREAK = 40;
-	private static final Double JITTER_OFFSET = 0.3;
-	private static final Float[] ACCELERATION_OFFSET = new Float[]{0.005f, 0.03f, -0.17f};
-	private static final Double BUILDING_ORIENTATION = -0.523598776;
+	private Sensors sensors;
 	private final int NUMBER_PARTICLES = 5000;
 	private final double CLOUD_RANGE = 72;
 	private final double CLOUD_DISPLACEMENT = 0.2;
@@ -39,16 +36,6 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 	private Visualisation visualisation;
 	private HashMap<String, RoomInfo> roomInfo;
 	double totalArea = 0;
-
-	private InertialPoint inertialPoint = null;
-	private Integer deviceOrientation = null;      //Orientation direction for filtering offline map
-	private SensorManager mSensorManager;
-	private Sensor linearAcceleration;
-	private Sensor magnetometer;
-	private Sensor gravity;
-	private float[] mLinearAcceleration = null;
-	private float[] mGeomagnetic = null;
-	private float[] mGravity = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -77,33 +64,8 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 	}
 
 	private void initializeSensors() {
-		//wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		linearAcceleration = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-		magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-		gravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-
-		if (linearAcceleration != null) {
-			mSensorManager.registerListener(this, linearAcceleration, SensorManager.SENSOR_DELAY_FASTEST);
-		} else {
-			log("Error: Accelerometer not found");
-		}
-		if (magnetometer != null) {
-			mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
-		} else {
-			log("Error: Magnetometer not found");
-		}
-		if (gravity != null) {
-			mSensorManager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_FASTEST);
-		} else {
-			log("Error: Gravity not found");
-		}
-	}
-
-	private void unregisterSensors() {
-		mSensorManager.unregisterListener(this, linearAcceleration);
-		mSensorManager.unregisterListener(this, gravity);
-		mSensorManager.unregisterListener(this, magnetometer);
+		sensors = new Sensors(this);
+		sensors.execute();
 	}
 
 	@Override
@@ -125,6 +87,10 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 		unregisterSensors();
 	}
 
+	private void unregisterSensors() {
+		sensors.cancel(false);
+	}
+
 	public void initializeViews() {
 		setContentView(R.layout.activity_localization);
 		visualisation = (Visualisation) findViewById(R.id.view);
@@ -139,12 +105,12 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 			particles.addAll(room.fillWithParticles(totalArea, NUMBER_PARTICLES));
 		}
 		particleCloud = new Cloud(mapCenter, particles);
-		inertialPoint = new InertialPoint(particleCloud.getInerPoint());
 
 		visualisation.setParticles(particleCloud.getParticles());
 	}
 
-	private void updateParticleCloud() {
+	public void updateParticleCloud(InertialPoint inertialPoint) {
+		//log("Inertial point: "+inertialPoint.toString());
 		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), inertialPoint, NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, roomInfo);
 		visualisation.setParticles(particleCloud.getParticles());
 
@@ -166,63 +132,6 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 	}
 
 	public void senseBayes(View view) {
-
-	}
-
-	/**
-	 * Handler for results of sensors.
-	 * Move inertial point after values for all three sets of data (gravity, geomagnetic and linear acceleration) have been received.
-	 */
-	private boolean processSensorValues() {
-		boolean success = false;
-		if (mGravity != null && mGeomagnetic != null && mLinearAcceleration != null) {
-
-			float R[] = new float[16];
-			float I[] = new float[16];
-			float iR[] = new float[16];
-			success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-
-			if (success) {
-				float orientation[] = new float[3];
-				SensorManager.getOrientation(R, orientation);
-				deviceOrientation = InertialData.getOrientation(IS_ORIENTATION_MERGED, orientation[0], BUILDING_ORIENTATION);
-
-				boolean invert = android.opengl.Matrix.invertM(iR, 0, R, 0);
-				if (invert) {
-
-					InertialData results = InertialData.getDatas(iR, mLinearAcceleration, orientation, BUILDING_ORIENTATION, JITTER_OFFSET, ACCELERATION_OFFSET);
-					inertialPoint = InertialPoint.move(inertialPoint, results, System.nanoTime(), SPEEDBREAK);
-
-				}
-
-			}
-			mGravity = null;
-			mGeomagnetic = null;
-			mLinearAcceleration = null;
-		}
-
-		return success;
-	}
-
-
-	@Override
-	public void onSensorChanged(SensorEvent event) {
-		log("onSensorChanged");
-		if (event.sensor.getType() == Sensor.TYPE_GRAVITY) {
-			mGravity = event.values;
-		} else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-			mGeomagnetic = event.values;
-		} else if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-			mLinearAcceleration = event.values;
-		}
-
-		if(processSensorValues()) {
-			updateParticleCloud();
-		}
-	}
-
-	@Override
-	public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
 	}
 }
