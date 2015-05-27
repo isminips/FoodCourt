@@ -17,9 +17,7 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by isminipsychoula on 5/22/15.
- */
+
 public class WifiActivity extends BaseActivity {
     WifiManager mainWifiObj;
     WifiScanReceiver wifiReciever;

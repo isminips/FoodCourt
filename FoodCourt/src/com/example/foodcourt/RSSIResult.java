@@ -2,9 +2,7 @@ package com.example.foodcourt;
 
 import android.net.wifi.ScanResult;
 import java.util.List;
-/**
- * Created by isminipsychoula on 5/22/15.
- */
+
 
 
 public class RSSIResult {
