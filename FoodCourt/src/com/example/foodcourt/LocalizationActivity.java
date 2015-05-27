@@ -1,22 +1,15 @@
 package com.example.foodcourt;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.wifi.ScanResult;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
 
-import com.example.foodcourt.particles.AppSettings;
 import com.example.foodcourt.particles.Cloud;
 import com.example.foodcourt.particles.InertialData;
 import com.example.foodcourt.particles.InertialPoint;
@@ -24,8 +17,6 @@ import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
 import com.example.foodcourt.particles.Point;
 import com.example.foodcourt.particles.RoomInfo;
-import com.example.foodcourt.particles.Threshold;
-import com.example.foodcourt.particles.Thresholds;
 import com.example.foodcourt.particles.Visualisation;
 
 import java.io.IOException;
@@ -35,6 +26,11 @@ import java.util.List;
 
 public class LocalizationActivity extends BaseActivity implements SensorEventListener {
 
+	private static final boolean IS_ORIENTATION_MERGED = true;
+	private static final int SPEEDBREAK = 40;
+	private static final Double JITTER_OFFSET = 0.3;
+	private static final Float[] ACCELERATION_OFFSET = new Float[]{0.005f, 0.03f, -0.17f};
+	private static final Double BUILDING_ORIENTATION = -0.523598776;
 	private final int NUMBER_PARTICLES = 5000;
 	private final double CLOUD_RANGE = 72;
 	private final double CLOUD_DISPLACEMENT = 0.2;
@@ -44,32 +40,15 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 	private HashMap<String, RoomInfo> roomInfo;
 	double totalArea = 0;
 
-
-	private final List<LocalizationActivity> initialPoints = new ArrayList<>();
 	private InertialPoint inertialPoint = null;
-	boolean isInitialising = true;
 	private Integer deviceOrientation = null;      //Orientation direction for filtering offline map
-	//private final HashMap<String, KNNFloorPoint> offlineMap;
-	//private  HashMap<String, RoomInfo> roomInfo;
-	private  SensorManager mSensorManager;
-	private  Sensor linearAcceleration;
+	private SensorManager mSensorManager;
+	private Sensor linearAcceleration;
 	private Sensor magnetometer;
 	private Sensor gravity;
-	//private Cloud cloud = null;
 	private float[] mLinearAcceleration = null;
 	private float[] mGeomagnetic = null;
 	private float[] mGravity = null;
-
-	private AppSettings appSettings;
-
-	private final Handler particleUpdater = new Handler();
-	final int PARTICLE_UPDATE_DELAY = 1000; //milliseconds
-	final Runnable particleUpdate = new Runnable() {
-		public void run() {
-			updateParticleCloud();
-			particleUpdater.postDelayed(this, PARTICLE_UPDATE_DELAY);
-		}
-	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -104,20 +83,27 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 		magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		gravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
 
-		//log(linearAcceleration.toString() + magnetometer.toString() + gravity.toString());
-
 		if (linearAcceleration != null) {
-			log("Accelerometer");
 			mSensorManager.registerListener(this, linearAcceleration, SensorManager.SENSOR_DELAY_FASTEST);
+		} else {
+			log("Error: Accelerometer not found");
 		}
 		if (magnetometer != null) {
-			log("Magnetometer");
 			mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
+		} else {
+			log("Error: Magnetometer not found");
 		}
 		if (gravity != null) {
-			log("Gravity");
 			mSensorManager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_FASTEST);
+		} else {
+			log("Error: Gravity not found");
 		}
+	}
+
+	private void unregisterSensors() {
+		mSensorManager.unregisterListener(this, linearAcceleration);
+		mSensorManager.unregisterListener(this, gravity);
+		mSensorManager.unregisterListener(this, magnetometer);
 	}
 
 	@Override
@@ -136,7 +122,7 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 	}
 
 	private void stop() {
-		stopParticleCloud();
+		unregisterSensors();
 	}
 
 	public void initializeViews() {
@@ -156,13 +142,6 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 		inertialPoint = new InertialPoint(particleCloud.getInerPoint());
 
 		visualisation.setParticles(particleCloud.getParticles());
-
-		//stopParticleCloud();
-		//particleUpdater.postDelayed(particleUpdate, PARTICLE_UPDATE_DELAY);
-	}
-
-	private void stopParticleCloud() {
-		particleUpdater.removeCallbacks(particleUpdate);
 	}
 
 	private void updateParticleCloud() {
@@ -195,7 +174,6 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 	 * Move inertial point after values for all three sets of data (gravity, geomagnetic and linear acceleration) have been received.
 	 */
 	private boolean processSensorValues() {
-		log("processSensorValues");
 		boolean success = false;
 		if (mGravity != null && mGeomagnetic != null && mLinearAcceleration != null) {
 
@@ -203,20 +181,18 @@ public class LocalizationActivity extends BaseActivity implements SensorEventLis
 			float I[] = new float[16];
 			float iR[] = new float[16];
 			success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-			log(success ? "Success" : "Failure");
+
 			if (success) {
 				float orientation[] = new float[3];
 				SensorManager.getOrientation(R, orientation);
-				deviceOrientation = InertialData.getOrientation(appSettings.isOrientationMerged(), orientation[0], appSettings.getBuildingOrientation());
+				deviceOrientation = InertialData.getOrientation(IS_ORIENTATION_MERGED, orientation[0], BUILDING_ORIENTATION);
 
-				if (!isInitialising) {
-					boolean invert = android.opengl.Matrix.invertM(iR, 0, R, 0);
-					if (invert) {
+				boolean invert = android.opengl.Matrix.invertM(iR, 0, R, 0);
+				if (invert) {
 
-						InertialData results = InertialData.getDatas(iR, mLinearAcceleration, orientation, appSettings.getBuildingOrientation(), appSettings.getJitterOffset(), appSettings.getAccelerationOffset());
-						inertialPoint = InertialPoint.move(inertialPoint, results, System.nanoTime(), appSettings.getSpeedBreak());
+					InertialData results = InertialData.getDatas(iR, mLinearAcceleration, orientation, BUILDING_ORIENTATION, JITTER_OFFSET, ACCELERATION_OFFSET);
+					inertialPoint = InertialPoint.move(inertialPoint, results, System.nanoTime(), SPEEDBREAK);
 
-					}
 				}
 
 			}
