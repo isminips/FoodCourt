@@ -42,26 +42,32 @@ public class ParticleFilter {
 
         TreeSet<Particle> sortedList = new TreeSet<Particle>();
         List<Particle> finalList = new ArrayList<Particle>();
+        double tweight=0;
 
         // We sort particles by weight
         for (Particle particle : particles) {
             if (particle.x < 0 || particle.y < 0 || particle.x > LocalizationActivity.TOTAL_DRAW_SIZE.getX() || particle.y > LocalizationActivity.TOTAL_DRAW_SIZE.getY()) {
                 continue;
             }
-
-            particle.weight = 0.7;
+            tweight= tweight +particle.weight;
+            //particle.weight = 0.7;
             for (RoomInfo room : rooms.values()) {
                 if (room.containsLocation(particle.getPoint())) {
                     particle.weight = room.getBorderProximity(particle);
+                    tweight= tweight +particle.weight;
                 }
             }
 
-            //particle.weight *= ParticleFilter.weight(posProba, particle, cloudRange);
+            particle.weight = (particle.weight*ParticleFilter.weight(posProba, particle, cloudRange))/tweight;
 
             sortedList.add(particle);
         }
         // We take only the PARTICLE_MAX first particles
-        while(sortedList.size() > 0 && sortedList.last() != null && sortedList.last().weight > 0.2) {
+//        while(sortedList.size() > 0 && sortedList.last() != null && sortedList.last().weight > 0.2) {
+//            finalList.add(sortedList.pollLast());
+//        }
+
+        for (int i = 0; i < particleCount; i++) {
             finalList.add(sortedList.pollLast());
         }
 

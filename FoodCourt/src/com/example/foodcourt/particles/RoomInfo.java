@@ -203,15 +203,21 @@ public class RoomInfo {
         double maxDist, dist;
         if (width < height) {
             maxDist = width/2;
-            dist = Math.min(particle.x - positionX, positionX+width - particle.x);
+            dist = Math.min(particle.x - positionX, positionX+width - particle.x) ;
         } else {
             maxDist = height/2;
             dist = Math.min(particle.y - positionY, positionY+height - particle.y);
         }
 
-        double a = (dist/maxDist);
-        double b = a * LocalizationActivity.CLOUD_RANGE;
+//        double a = (dist/maxDist);
+//        double b = a * LocalizationActivity.CLOUD_RANGE;
+//
+//        return Math.exp(b)/1.6;
 
-        return Math.exp(b) / 1.6;
+//        double a = Math.pow((dist/maxDist),2);
+//        double b = a * LocalizationActivity.CLOUD_RANGE;
+//
+//        return Math.exp(b);
+        return dist/maxDist;
     }
 }
