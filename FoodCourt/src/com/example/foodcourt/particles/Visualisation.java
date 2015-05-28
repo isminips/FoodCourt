@@ -22,19 +22,12 @@ public class Visualisation extends View {
     protected Drawable floorPlanImage;
     private final android.graphics.Point screenSize = new android.graphics.Point();
     private Point totalDrawSize;
-    private Point probabilisticPoint = new Point();
-    private Point particlePoint = new Point();
-    private Point inertialPoint = new Point();
-    private Point bestPoint = new Point();
     private Collection<RoomInfo> rooms;
     private Collection<Particle> particles;
     private static final float RADIUS = 5;
-    private final Paint probabilisticPaint = new Paint();
     private final Paint particlePaint = new Paint();
     private final Paint inertialPaint = new Paint();
     private final Paint roomPaint = new Paint();
-    private static final double X_PIXELS = 1280.0 / 53.4;
-    private static final double Y_PIXELS = 630.0 / 24.0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -57,7 +50,6 @@ public class Visualisation extends View {
         roomPaint.setStyle(Paint.Style.STROKE);
         roomPaint.setStrokeWidth(5);
 
-        probabilisticPaint.setColor(Color.RED);
         inertialPaint.setColor(Color.GREEN);
 
         clear();
@@ -83,28 +75,11 @@ public class Visualisation extends View {
     }
 
     /**
-     * Draws the latest points on the floor plan and refreshes the view.
-     * @param probabilisticPoint
-     * @param particlePoint
-     * @param inertialPoint
-     * @param corridorPoint
-     */
-    public void setPoint(Point probabilisticPoint, Point particlePoint, Point inertialPoint, Point corridorPoint) {
-        this.probabilisticPoint = new Point(probabilisticPoint.getX() * X_PIXELS, probabilisticPoint.getY() * Y_PIXELS);
-        this.particlePoint = new Point(particlePoint.getX() * X_PIXELS, particlePoint.getY() * Y_PIXELS);
-        this.inertialPoint = new Point(inertialPoint.getX() * X_PIXELS, inertialPoint.getY() * Y_PIXELS);
-        this.bestPoint = new Point(corridorPoint.getX() * X_PIXELS, corridorPoint.getY() * Y_PIXELS);
-        this.invalidate();
-    }
-
-    /**
      * Resets the points on the floor plan image and refreshes the view.
      */
     public void clear() {
-        this.probabilisticPoint = new Point();
-        this.particlePoint = new Point();
-        this.inertialPoint = new Point();
-        this.bestPoint = new Point();
+        this.particles = null;
+        this.rooms = null;
         this.invalidate();
     }
 
@@ -134,11 +109,6 @@ public class Visualisation extends View {
                 canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS, particlePaint);
             }
         }
-
-        canvas.drawCircle(probabilisticPoint.getXfl(), probabilisticPoint.getYfl(), RADIUS, probabilisticPaint);
-        canvas.drawCircle(particlePoint.getXfl(), particlePoint.getYfl(), RADIUS + 2, particlePaint);
-        canvas.drawCircle(inertialPoint.getXfl(), inertialPoint.getYfl(), RADIUS, inertialPaint);
-        canvas.drawCircle(bestPoint.getXfl(), bestPoint.getYfl(), RADIUS + 2, roomPaint);
     }
 
     private Point locationToPixel(Point p) {

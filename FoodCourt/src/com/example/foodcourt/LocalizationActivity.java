@@ -1,17 +1,12 @@
 package com.example.foodcourt;
 
-import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
 
 import com.example.foodcourt.particles.Cloud;
-import com.example.foodcourt.particles.InertialData;
 import com.example.foodcourt.particles.InertialPoint;
 import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
@@ -28,14 +23,23 @@ import java.util.List;
 public class LocalizationActivity extends BaseActivity {
 
 	private Sensors sensors;
-	private final int NUMBER_PARTICLES = 5000;
-	private final double CLOUD_RANGE = 72;
-	private final double CLOUD_DISPLACEMENT = 0.2;
+	public final static int NUMBER_PARTICLES = 1000;
+	public final static double CLOUD_RANGE = 0.5;
+	public final static double CLOUD_DISPLACEMENT = 0.1;
 	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
 	private Cloud particleCloud;
 	private Visualisation visualisation;
 	private HashMap<String, RoomInfo> roomInfo;
 	double totalArea = 0;
+
+	private final Handler particleUpdater = new Handler();
+	final int PARTICLE_UPDATE_DELAY = 2000; //milliseconds
+	final Runnable particleUpdate = new Runnable() {
+		public void run() {
+			updateVisualization();
+			particleUpdater.postDelayed(this, PARTICLE_UPDATE_DELAY);
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -85,6 +89,7 @@ public class LocalizationActivity extends BaseActivity {
 
 	private void stop() {
 		unregisterSensors();
+		particleUpdater.removeCallbacks(particleUpdate);
 	}
 
 	private void unregisterSensors() {
@@ -94,11 +99,12 @@ public class LocalizationActivity extends BaseActivity {
 	public void initializeViews() {
 		setContentView(R.layout.activity_localization);
 		visualisation = (Visualisation) findViewById(R.id.view);
+		particleUpdater.postDelayed(particleUpdate, PARTICLE_UPDATE_DELAY);
 	}
 
 	// PARTICLE CLOUD
 	private void initializeParticleCloud() {
-		Point mapCenter = new Point(36,7.15);
+		Point mapCenter = new Point(36, 7.15);
 
 		List<Particle> particles = new ArrayList<Particle>();
 		for(RoomInfo room : roomInfo.values()) {
@@ -106,32 +112,34 @@ public class LocalizationActivity extends BaseActivity {
 		}
 		particleCloud = new Cloud(mapCenter, particles);
 
-		visualisation.setParticles(particleCloud.getParticles());
+		updateVisualization();
 	}
 
 	public void updateParticleCloud(InertialPoint inertialPoint) {
-		//log("Inertial point: "+inertialPoint.toString());
-		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), inertialPoint, NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, roomInfo);
-		visualisation.setParticles(particleCloud.getParticles());
+		if (inertialPoint.getPoint().equals(particleCloud.getInerPoint())) {
+			return;
+		}
 
-		// For now, move the cloud by +1X
-		//Point oldInerPoint = particleCloud.getInerPoint();
-		//particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), new InertialPoint(new Point(oldInerPoint.getX() + 1, oldInerPoint.getY())), NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, roomInfo);
-		//visualisation.setParticles(particleCloud.getParticles());
+		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), inertialPoint, NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, roomInfo);
 
 		log(particleCloud.getEstiPos().toString(3) + " " + particleCloud.getParticleCount());
 	}
 
+	private void updateVisualization() {
+		visualisation.setParticles(particleCloud.getParticles());
+	}
+
 	// BUTTONS
 	public void initializePA(View view) {
+		toast("Reset particle cloud");
 		initializeParticleCloud();
 	}
 
 	public void initializeBayes(View view) {
-
+		toast("TODO");
 	}
 
 	public void senseBayes(View view) {
-
+		toast("TODO");
 	}
 }

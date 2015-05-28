@@ -28,11 +28,11 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
     private float[] mGravity = null;
     private LocalizationActivity activity;
 
-    private static final boolean IS_ORIENTATION_MERGED = true;
-    private static final int SPEEDBREAK = 40;
-    private static final Double JITTER_OFFSET = 0.3;
-    private static final Float[] ACCELERATION_OFFSET = new Float[]{0.005f, 0.03f, -0.17f};
-    private static final Double BUILDING_ORIENTATION = -0.523598776;
+    public static final boolean IS_ORIENTATION_MERGED = true;
+    public static final int SPEEDBREAK = 40;
+    public static final Double JITTER_OFFSET = 0.3;
+    public static final Float[] ACCELERATION_OFFSET = new Float[]{0.005f, 0.03f, -0.17f};
+    public static final Double BUILDING_ORIENTATION = -0.523598776;
 
     public Sensors(LocalizationActivity activity) {
         this.activity = activity;

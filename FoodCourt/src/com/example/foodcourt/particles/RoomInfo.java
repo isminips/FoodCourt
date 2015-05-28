@@ -6,6 +6,8 @@ package com.example.foodcourt.particles;
 
 import android.graphics.Rect;
 
+import com.example.foodcourt.LocalizationActivity;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -146,6 +148,8 @@ public class RoomInfo {
     public List<Particle> fillWithParticles(double totalArea, int numParticles) {
         double allowedParticles = (getArea() / totalArea) * numParticles;
 
+        System.out.println(name + " " + allowedParticles);
+
         List<Particle> particles = new ArrayList<Particle>();
         for(int i = 0; i < allowedParticles; i++) {
             double x = positionX + Math.random() * width;
@@ -192,6 +196,10 @@ public class RoomInfo {
     }
 
     public double getBorderProximity(Particle particle) {
+        if (!isRoom) {
+            return 1;
+        }
+
         double maxDist, dist;
         if (width < height) {
             maxDist = width/2;
@@ -201,6 +209,9 @@ public class RoomInfo {
             dist = Math.min(particle.y - positionY, positionY+height - particle.y);
         }
 
-        return dist / maxDist;
+        double a = (dist/maxDist);
+        double b = a * LocalizationActivity.CLOUD_RANGE;
+
+        return Math.exp(b) / 1.6;
     }
 }

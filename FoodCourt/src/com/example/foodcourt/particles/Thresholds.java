@@ -37,7 +37,7 @@ public class Thresholds {
         particleCreation.put(Threshold.UPPER, 4);
         particleCreation.put(Threshold.MID, 3);
         particleCreation.put(Threshold.LOWER, 2);
-        particleCreation.put(Threshold.BASE, 0);
+        particleCreation.put(Threshold.BASE, 1);
         return particleCreation;
     }
 }

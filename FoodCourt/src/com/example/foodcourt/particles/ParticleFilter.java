@@ -49,18 +49,19 @@ public class ParticleFilter {
                 continue;
             }
 
+            particle.weight = 0.7;
             for (RoomInfo room : rooms.values()) {
                 if (room.containsLocation(particle.getPoint())) {
                     particle.weight = room.getBorderProximity(particle);
                 }
             }
 
-            //particle.weight *= ParticleFilter.weight(posProba, particle);
+            //particle.weight *= ParticleFilter.weight(posProba, particle, cloudRange);
 
             sortedList.add(particle);
         }
         // We take only the PARTICLE_MAX first particles
-        for (int i = 0; i < particleCount; i++) {
+        while(sortedList.size() > 0 && sortedList.last() != null && sortedList.last().weight > 0.2) {
             finalList.add(sortedList.pollLast());
         }
 
@@ -71,17 +72,22 @@ public class ParticleFilter {
 
         List<Particle> newList = new ArrayList<Particle>();
 
-        for (Particle particle : particles) {
+        while (newList.size() < LocalizationActivity.NUMBER_PARTICLES) {
+            for (Particle particle : particles) {
+                if (newList.size() >= LocalizationActivity.NUMBER_PARTICLES) {
+                    break;
+                }
 
-            if (particle != null) {
-                if (particle.weight > boundaries.get(Threshold.UPPER)) {
-                    newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.UPPER)));
-                } else if ((particle.weight <= boundaries.get(Threshold.UPPER)) && (particle.weight > boundaries.get(Threshold.MID))) {
-                    newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.MID)));
-                } else if ((particle.weight <= boundaries.get(Threshold.MID)) && (particle.weight > boundaries.get(Threshold.LOWER))) {
-                    newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.LOWER)));
-                } else {
-                    newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.BASE)));
+                if (particle != null) {
+                    if (particle.weight > boundaries.get(Threshold.UPPER)) {
+                        newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.UPPER)));
+                    } else if ((particle.weight <= boundaries.get(Threshold.UPPER)) && (particle.weight > boundaries.get(Threshold.MID))) {
+                        newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.MID)));
+                    } else if ((particle.weight <= boundaries.get(Threshold.MID)) && (particle.weight > boundaries.get(Threshold.LOWER))) {
+                        newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.LOWER)));
+                    } else {
+                        newList.addAll(createParticles(particle.getPoint(), particleCreation.get(Threshold.BASE)));
+                    }
                 }
             }
         }
@@ -173,9 +179,11 @@ public class ParticleFilter {
     }
 
     //  Weight
-    private static double weight(Point estiPos, Particle partPos) {
-        double maxDist = distance(LocalizationActivity.TOTAL_DRAW_SIZE, new Point(0,0));
-        return (maxDist - distance(estiPos, partPos)) / maxDist;
+    private static double weight(Point estiPos, Particle partPos, double cloudRange) {
+        double a = Math.pow((distance(estiPos, partPos)), 2);
+        double b = -a * cloudRange;
+
+        return Math.exp(b);
     }
 
 }
