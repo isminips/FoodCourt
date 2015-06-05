@@ -148,8 +148,6 @@ public class RoomInfo {
     public List<Particle> fillWithParticles(double totalArea, int numParticles) {
         double allowedParticles = (getArea() / totalArea) * numParticles;
 
-        System.out.println(name + " " + allowedParticles);
-
         List<Particle> particles = new ArrayList<Particle>();
         for(int i = 0; i < allowedParticles; i++) {
             double x = positionX + Math.random() * width;

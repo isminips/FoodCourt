@@ -23,7 +23,7 @@ import java.util.List;
 public class LocalizationActivity extends BaseActivity {
 
 	private Sensors sensors;
-	public final static int NUMBER_PARTICLES = 1000;
+	public final static int NUMBER_PARTICLES = 2000;
 	public final static double CLOUD_RANGE = 0.5;
 	public final static double CLOUD_DISPLACEMENT = 0.1;
 	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
@@ -64,12 +64,12 @@ public class LocalizationActivity extends BaseActivity {
 			e.printStackTrace();
 		}
 
-		initializeSensors();
 		initializeParticleCloud();
+		initializeSensors();
 	}
 
 	private void initializeSensors() {
-		sensors = new Sensors(this);
+		sensors = new Sensors(this, particleCloud.getInerPoint());
 		sensors.execute();
 	}
 
@@ -91,6 +91,7 @@ public class LocalizationActivity extends BaseActivity {
 	private void stop() {
 		unregisterSensors();
 		particleUpdater.removeCallbacks(particleUpdate);
+		visualisation.clear();
 	}
 
 	private void unregisterSensors() {
@@ -128,6 +129,7 @@ public class LocalizationActivity extends BaseActivity {
 
 	private void updateVisualization() {
 		visualisation.setParticles(particleCloud.getParticles());
+		visualisation.setEstimatedPoint(particleCloud.getEstiPos());
 	}
 
 	// BUTTONS

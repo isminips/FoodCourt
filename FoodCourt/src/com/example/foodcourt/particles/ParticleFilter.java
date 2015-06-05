@@ -22,43 +22,53 @@ public class ParticleFilter {
         // Weight calculus
         List<Particle> weightList = weightCloud(cloud.getParticles(), posProba, particleCount, cloudRange, rooms);
 
-        // Resample
+        // Resample according to weights
         List<Particle> reSampleList = reSample(weightList, boundaries, particleCreation);
 
         // Move the cloud
         List<Particle> moveCloudList = moveCloud(reSampleList, cloud.getInerPoint(), inertialPoint);
 
-        // Create new cloud of particles
+        // Spread the cloud a little
         List<Particle> newRandomCloudList = newRandomCloud(moveCloudList, cloudDisplacement);
 
         // Calculation of barycentre
-        Point estiPosPart = position(newRandomCloudList);
+        Point centerPoint = position(newRandomCloudList);
 
         //Update
-        return new Cloud(estiPosPart, newRandomCloudList, inertialPoint.getPoint());
+        return new Cloud(centerPoint, newRandomCloudList, inertialPoint.getPoint());
     }
 
     private static List<Particle> weightCloud(List<Particle> particles, Point posProba, double particleCount, double cloudRange, HashMap<String, RoomInfo> rooms) throws NullPointerException {
 
         TreeSet<Particle> sortedList = new TreeSet<Particle>();
         List<Particle> finalList = new ArrayList<Particle>();
-        double tweight=0;
+        double normalize=0;
 
         // We sort particles by weight
         for (Particle particle : particles) {
+            // Cut out the particles leaving the screen
             if (particle.x < 0 || particle.y < 0 || particle.x > LocalizationActivity.TOTAL_DRAW_SIZE.getX() || particle.y > LocalizationActivity.TOTAL_DRAW_SIZE.getY()) {
                 continue;
             }
-            tweight= tweight +particle.weight;
-            //particle.weight = 0.7;
-            for (RoomInfo room : rooms.values()) {
-                if (room.containsLocation(particle.getPoint())) {
-                    particle.weight = room.getBorderProximity(particle);
-                    tweight= tweight +particle.weight;
-                }
+            // Cut out the empty corners
+            if ((particle.x < 12 && particle.y > 8.2) || (particle.x > 56 && particle.y < 6.1)) {
+                continue;
             }
 
-            particle.weight = (particle.weight*ParticleFilter.weight(posProba, particle, cloudRange))/tweight;
+            /*for (RoomInfo room : rooms.values()) {
+                if (room.containsLocation(particle.getPoint())) {
+                    particle.weight = room.getBorderProximity(particle);
+                }
+            }*/
+
+            particle.weight = particle.weight * ParticleFilter.weight(posProba, particle, cloudRange);
+
+            if (particle.weight > normalize)
+                normalize = particle.weight;
+        }
+
+        for (Particle particle : particles) {
+            particle.weight /= normalize;
 
             sortedList.add(particle);
         }

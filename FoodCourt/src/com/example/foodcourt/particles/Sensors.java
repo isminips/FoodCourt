@@ -31,11 +31,12 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
     public static final boolean IS_ORIENTATION_MERGED = true;
     public static final int SPEEDBREAK = 40;
     public static final Double JITTER_OFFSET = 0.3;
-    public static final Float[] ACCELERATION_OFFSET = new Float[]{0.005f, 0.03f, -0.17f};
+    public static final Float[] ACCELERATION_OFFSET = new Float[]{0.05f, 0.3f, -0.17f};
     public static final Double BUILDING_ORIENTATION = -0.523598776;
 
-    public Sensors(LocalizationActivity activity) {
+    public Sensors(LocalizationActivity activity, Point initialInertialPoint) {
         this.activity = activity;
+        this.inertialPoint = new InertialPoint(initialInertialPoint);
     }
 
     @Override
@@ -67,18 +68,20 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         gravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
 
+        int SENSOR_SENSITIVITY = SensorManager.SENSOR_DELAY_FASTEST;
+
         if (linearAcceleration != null) {
-            mSensorManager.registerListener(this, linearAcceleration, SensorManager.SENSOR_DELAY_NORMAL);
+            mSensorManager.registerListener(this, linearAcceleration, SENSOR_SENSITIVITY);
         } else {
             System.out.println("Error: Accelerometer not found");
         }
         if (magnetometer != null) {
-            mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+            mSensorManager.registerListener(this, magnetometer, SENSOR_SENSITIVITY);
         } else {
             System.out.println("Error: Magnetometer not found");
         }
         if (gravity != null) {
-            mSensorManager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_NORMAL);
+            mSensorManager.registerListener(this, gravity, SENSOR_SENSITIVITY);
         } else {
             System.out.println("Error: Gravity not found");
         }

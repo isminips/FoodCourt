@@ -24,9 +24,10 @@ public class Visualisation extends View {
     private Point totalDrawSize;
     private Collection<RoomInfo> rooms;
     private Collection<Particle> particles;
+    private Point estimatedPoint;
     private static final float RADIUS = 5;
     private final Paint particlePaint = new Paint();
-    private final Paint inertialPaint = new Paint();
+    private final Paint estimatedPaint = new Paint();
     private final Paint roomPaint = new Paint();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +51,8 @@ public class Visualisation extends View {
         roomPaint.setStyle(Paint.Style.STROKE);
         roomPaint.setStrokeWidth(5);
 
-        inertialPaint.setColor(Color.GREEN);
+        estimatedPaint.setColor(Color.GREEN);
+        estimatedPaint.setStrokeWidth(10);
 
         clear();
     }
@@ -74,12 +76,18 @@ public class Visualisation extends View {
         this.invalidate();
     }
 
+    public void setEstimatedPoint(Point point) {
+        this.estimatedPoint = point;
+        this.invalidate();
+    }
+
     /**
      * Resets the points on the floor plan image and refreshes the view.
      */
     public void clear() {
         this.particles = null;
         this.rooms = null;
+        this.estimatedPoint = null;
         this.invalidate();
     }
 
@@ -108,6 +116,11 @@ public class Visualisation extends View {
                 Point pixel = locationToPixel(p.getPoint());
                 canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS, particlePaint);
             }
+        }
+
+        if(estimatedPoint != null) {
+            Point pixel = locationToPixel(estimatedPoint);
+            canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS*5, estimatedPaint);
         }
     }
 
