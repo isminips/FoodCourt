@@ -25,11 +25,12 @@ public class LocalizationActivity extends BaseActivity {
 	private Sensors sensors;
 	public final static int NUMBER_PARTICLES = 2000;
 	public final static double CLOUD_RANGE = 0.5;
-	public final static double CLOUD_DISPLACEMENT = 0.1;
+	public final static double CLOUD_DISPLACEMENT = 0.4;
 	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
 	private Cloud particleCloud;
 	private Visualisation visualisation;
 	private HashMap<String, RoomInfo> roomInfo;
+	private double compassAngle = 0;
 	double totalArea = 0;
 
 	private final Handler particleUpdater = new Handler();
@@ -122,7 +123,9 @@ public class LocalizationActivity extends BaseActivity {
 			return;
 		}
 
-		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), inertialPoint, NUMBER_PARTICLES, CLOUD_RANGE, CLOUD_DISPLACEMENT, roomInfo);
+		compassAngle = inertialPoint.getInertialData().getAzimuth();
+
+		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), inertialPoint, roomInfo);
 
 		log(particleCloud.getEstiPos().toString(3) + " " + particleCloud.getParticleCount());
 	}
@@ -130,6 +133,7 @@ public class LocalizationActivity extends BaseActivity {
 	private void updateVisualization() {
 		visualisation.setParticles(particleCloud.getParticles());
 		visualisation.setEstimatedPoint(particleCloud.getEstiPos());
+		visualisation.setCompassAngle(compassAngle);
 	}
 
 	// BUTTONS

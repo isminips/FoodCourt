@@ -31,6 +31,10 @@ public class Particle implements Comparable {
         return "("+x+","+y+")*"+weight;
     }
 
+    public Point move(double x, double y) {
+        return new Point(this.x + x, this.y + y);
+    }
+
     @Override
     public int compareTo(Object o) throws NullPointerException, ClassCastException {
         int result = 1;

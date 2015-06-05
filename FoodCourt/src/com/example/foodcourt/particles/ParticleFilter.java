@@ -15,12 +15,12 @@ import java.util.TreeSet;
  */
 public class ParticleFilter {
 
-    public static Cloud filter(Cloud cloud, Point posProba, InertialPoint inertialPoint, double particleCount, double cloudRange, double cloudDisplacement, HashMap<String, RoomInfo> rooms) {
+    public static Cloud filter(Cloud cloud, Point posProba, InertialPoint inertialPoint, HashMap<String, RoomInfo> rooms) {
         EnumMap<Threshold, Float> boundaries            = Thresholds.boundaries();
         EnumMap<Threshold, Integer> particleCreation    = Thresholds.particleCreation();
 
         // Weight calculus
-        List<Particle> weightList = weightCloud(cloud.getParticles(), posProba, particleCount, cloudRange, rooms);
+        List<Particle> weightList = weightCloud(cloud.getParticles(), rooms, cloud.getInerPoint(), inertialPoint.getPoint());
 
         // Resample according to weights
         List<Particle> reSampleList = reSample(weightList, boundaries, particleCreation);
@@ -29,7 +29,7 @@ public class ParticleFilter {
         List<Particle> moveCloudList = moveCloud(reSampleList, cloud.getInerPoint(), inertialPoint);
 
         // Spread the cloud a little
-        List<Particle> newRandomCloudList = newRandomCloud(moveCloudList, cloudDisplacement);
+        List<Particle> newRandomCloudList = newRandomCloud(moveCloudList, LocalizationActivity.CLOUD_DISPLACEMENT);
 
         // Calculation of barycentre
         Point centerPoint = position(newRandomCloudList);
@@ -38,46 +38,44 @@ public class ParticleFilter {
         return new Cloud(centerPoint, newRandomCloudList, inertialPoint.getPoint());
     }
 
-    private static List<Particle> weightCloud(List<Particle> particles, Point posProba, double particleCount, double cloudRange, HashMap<String, RoomInfo> rooms) throws NullPointerException {
+    private static List<Particle> weightCloud(List<Particle> particles, HashMap<String, RoomInfo> rooms, Point inertialPoint, Point prevInerPoint) throws NullPointerException {
 
         TreeSet<Particle> sortedList = new TreeSet<Particle>();
         List<Particle> finalList = new ArrayList<Particle>();
-        double normalize=0;
 
+        double xDisplacement = inertialPoint.getX() - prevInerPoint.getX();
+        double yDisplacement = inertialPoint.getY() - prevInerPoint.getY();
+
+        int count = 0;
         // We sort particles by weight
         for (Particle particle : particles) {
+            boolean alive = true;
+
             // Cut out the particles leaving the screen
-            if (particle.x < 0 || particle.y < 0 || particle.x > LocalizationActivity.TOTAL_DRAW_SIZE.getX() || particle.y > LocalizationActivity.TOTAL_DRAW_SIZE.getY()) {
-                continue;
+            if (particle.x + xDisplacement < 0 || particle.y + yDisplacement < 0 || particle.x + xDisplacement > LocalizationActivity.TOTAL_DRAW_SIZE.getX() || particle.y + yDisplacement > LocalizationActivity.TOTAL_DRAW_SIZE.getY()) {
+                alive = false;
             }
             // Cut out the empty corners
-            if ((particle.x < 12 && particle.y > 8.2) || (particle.x > 56 && particle.y < 6.1)) {
-                continue;
+            if ((particle.x + xDisplacement < 12 && particle.y + yDisplacement > 8.2) || (particle.x + xDisplacement > 56 && particle.y + yDisplacement < 6.1)) {
+                alive = false;
             }
 
-            /*for (RoomInfo room : rooms.values()) {
+            for (RoomInfo room : rooms.values()) {
                 if (room.containsLocation(particle.getPoint())) {
-                    particle.weight = room.getBorderProximity(particle);
+                    if (room.collidesWithWall(particle.getPoint(), xDisplacement, yDisplacement)) {
+                        count++;
+                        alive = false;
+                    }
                 }
-            }*/
+            }
 
-            particle.weight = particle.weight * ParticleFilter.weight(posProba, particle, cloudRange);
-
-            if (particle.weight > normalize)
-                normalize = particle.weight;
+            if (alive) {
+                sortedList.add(particle);
+            }
         }
+        System.out.println("Particles leaving room: "+count);
 
-        for (Particle particle : particles) {
-            particle.weight /= normalize;
-
-            sortedList.add(particle);
-        }
-        // We take only the PARTICLE_MAX first particles
-//        while(sortedList.size() > 0 && sortedList.last() != null && sortedList.last().weight > 0.2) {
-//            finalList.add(sortedList.pollLast());
-//        }
-
-        for (int i = 0; i < particleCount; i++) {
+        for (int i = 0; i < LocalizationActivity.NUMBER_PARTICLES; i++) {
             finalList.add(sortedList.pollLast());
         }
 
@@ -112,7 +110,6 @@ public class ParticleFilter {
     }
 
     private static List<Particle> moveCloud(List<Particle> particles, Point prevInerPoint, InertialPoint inertialPoint) {
-
         double xDisplacement = inertialPoint.getX() - prevInerPoint.getX();
         double yDisplacement = inertialPoint.getY() - prevInerPoint.getY();
 

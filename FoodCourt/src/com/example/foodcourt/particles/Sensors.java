@@ -32,7 +32,7 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
     public static final int SPEEDBREAK = 40;
     public static final Double JITTER_OFFSET = 0.3;
     public static final Float[] ACCELERATION_OFFSET = new Float[]{0.05f, 0.3f, -0.17f};
-    public static final Double BUILDING_ORIENTATION = -0.523598776;
+    public static final Double BUILDING_ORIENTATION = 0.0;
 
     public Sensors(LocalizationActivity activity, Point initialInertialPoint) {
         this.activity = activity;

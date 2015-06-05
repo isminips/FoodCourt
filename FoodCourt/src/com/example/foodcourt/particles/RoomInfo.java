@@ -218,4 +218,20 @@ public class RoomInfo {
 //        return Math.exp(b);
         return dist/maxDist;
     }
+
+    public boolean collidesWithWall(Point point, double xMovement, double yMovement) {
+        if (isRoom && (point.getX() + xMovement < positionX || point.getX() + xMovement > positionX + width)) {
+            return true;
+        }
+
+        if (isRoom && positionY == 0 && (point.getY() + yMovement < positionY)) {
+            return true;
+        }
+
+        if (isRoom && positionY == 8.2 && (point.getY() + yMovement > positionY)) {
+            return true;
+        }
+
+        return false;
+    }
 }

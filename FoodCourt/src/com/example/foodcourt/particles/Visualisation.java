@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Display;
@@ -25,10 +26,12 @@ public class Visualisation extends View {
     private Collection<RoomInfo> rooms;
     private Collection<Particle> particles;
     private Point estimatedPoint;
+    private double compassAngle;
     private static final float RADIUS = 5;
     private final Paint particlePaint = new Paint();
     private final Paint estimatedPaint = new Paint();
     private final Paint roomPaint = new Paint();
+    private final Paint compassPaint = new Paint();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,6 +56,10 @@ public class Visualisation extends View {
 
         estimatedPaint.setColor(Color.GREEN);
         estimatedPaint.setStrokeWidth(10);
+
+        compassPaint.setColor(Color.DKGRAY);
+        compassPaint.setStrokeWidth(10);
+        compassPaint.setTextSize(40);
 
         clear();
     }
@@ -111,6 +118,15 @@ public class Visualisation extends View {
             }
         }
 
+        canvas.save(Canvas.MATRIX_SAVE_FLAG); //Saving the canvas and later restoring it so only this image will be rotated.
+        float centerx = getWidth()/2;
+        float centery = getHeight()/2;
+        canvas.rotate((float) -compassAngle, centerx, centery);
+        canvas.drawLine(centerx, centery+100, centerx, centery-100, compassPaint);
+        canvas.drawText("N", centerx-13, centery - 115, compassPaint);
+        canvas.drawText("S", centerx-13, centery + 135, compassPaint);
+        canvas.restore();
+
         if(particles != null) {
             for (Particle p : particles) {
                 Point pixel = locationToPixel(p.getPoint());
@@ -140,5 +156,9 @@ public class Visualisation extends View {
 
     public void setTotalDrawSize(Point totalDrawSize) {
         this.totalDrawSize = totalDrawSize;
+    }
+
+    public void setCompassAngle(double angle) {
+        compassAngle = angle;
     }
 }
