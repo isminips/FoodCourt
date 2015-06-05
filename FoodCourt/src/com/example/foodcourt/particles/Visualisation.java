@@ -26,6 +26,7 @@ public class Visualisation extends View {
     private Collection<RoomInfo> rooms;
     private Collection<Particle> particles;
     private Point estimatedPoint;
+    private String estimatedRoom;
     private double compassAngle;
     private static final float RADIUS = 5;
     private final Paint particlePaint = new Paint();
@@ -56,6 +57,7 @@ public class Visualisation extends View {
 
         estimatedPaint.setColor(Color.GREEN);
         estimatedPaint.setStrokeWidth(10);
+        estimatedPaint.setTextSize(50);
 
         compassPaint.setColor(Color.DKGRAY);
         compassPaint.setStrokeWidth(10);
@@ -138,6 +140,11 @@ public class Visualisation extends View {
             Point pixel = locationToPixel(estimatedPoint);
             canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS*5, estimatedPaint);
         }
+
+        if(estimatedRoom != null) {
+            canvas.drawText("Room:", getWidth() - getWidth() / 7, 50, estimatedPaint);
+            canvas.drawText(estimatedRoom, getWidth() - getWidth() / 7, 150, estimatedPaint);
+        }
     }
 
     private Point locationToPixel(Point p) {
@@ -160,5 +167,9 @@ public class Visualisation extends View {
 
     public void setCompassAngle(double angle) {
         compassAngle = angle;
+    }
+
+    public void setEstimatedRoom(String room) {
+        estimatedRoom = room;
     }
 }

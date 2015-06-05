@@ -23,9 +23,8 @@ import java.util.List;
 public class LocalizationActivity extends BaseActivity {
 
 	private Sensors sensors;
-	public final static int NUMBER_PARTICLES = 2000;
-	public final static double CLOUD_RANGE = 0.5;
-	public final static double CLOUD_DISPLACEMENT = 0.4;
+	public final static int NUMBER_PARTICLES = 1000;
+	public final static double CLOUD_DISPLACEMENT = 0.2;
 	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
 	private Cloud particleCloud;
 	private Visualisation visualisation;
@@ -134,6 +133,19 @@ public class LocalizationActivity extends BaseActivity {
 		visualisation.setParticles(particleCloud.getParticles());
 		visualisation.setEstimatedPoint(particleCloud.getEstiPos());
 		visualisation.setCompassAngle(compassAngle);
+		visualisation.setEstimatedRoom(getEstimatedRoom(particleCloud.getEstiPos()));
+	}
+
+	private String getEstimatedRoom(Point estimatedPoint) {
+		log("Spread: "+ParticleFilter.calculateSpread(particleCloud.getParticles()));
+
+		for(RoomInfo r : roomInfo.values()) {
+			if (r.containsLocation(estimatedPoint)) {
+				return r.getName();
+			}
+		}
+
+		return "";
 	}
 
 	// BUTTONS

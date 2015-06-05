@@ -28,10 +28,9 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
     private float[] mGravity = null;
     private LocalizationActivity activity;
 
-    public static final boolean IS_ORIENTATION_MERGED = true;
     public static final int SPEEDBREAK = 40;
-    public static final Double JITTER_OFFSET = 0.3;
-    public static final Float[] ACCELERATION_OFFSET = new Float[]{0.05f, 0.3f, -0.17f};
+    public static final Double JITTER_OFFSET = 0.5;
+    public static final Float[] ACCELERATION_OFFSET = new Float[]{0.25f, 0.5f, -0.3f};
     public static final Double BUILDING_ORIENTATION = 0.0;
 
     public Sensors(LocalizationActivity activity, Point initialInertialPoint) {
@@ -109,14 +108,18 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                deviceOrientation = InertialData.getOrientation(IS_ORIENTATION_MERGED, orientation[0], BUILDING_ORIENTATION);
 
                 boolean invert = android.opengl.Matrix.invertM(iR, 0, R, 0);
                 if (invert) {
 
                     InertialData results = InertialData.getDatas(iR, mLinearAcceleration, orientation, BUILDING_ORIENTATION, JITTER_OFFSET, ACCELERATION_OFFSET);
+                    Point prevPoint = inertialPoint.getPoint();
                     inertialPoint = InertialPoint.move(inertialPoint, results, System.nanoTime(), SPEEDBREAK);
-                    publishProgress(inertialPoint);
+
+                    double[] movement = inertialPoint.getMovement(prevPoint);
+                    if (Math.abs(movement[0]) + Math.abs(movement[1]) > 0.001) {
+                        publishProgress(inertialPoint);
+                    }
                 }
 
             }

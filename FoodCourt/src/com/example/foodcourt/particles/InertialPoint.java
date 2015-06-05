@@ -119,4 +119,12 @@ public class InertialPoint {
         return new Double[]{x, V};
     }
 
+    public double[] getMovement(Point prevPoint) {
+        double xDisplacement = x - prevPoint.getX();
+        double yDisplacement = y - prevPoint.getY();
+        double deviceOrientation = inertialData.getAzimuth();
+
+        return new double[]{xDisplacement * Math.cos(deviceOrientation), yDisplacement * Math.sin(deviceOrientation)};
+    }
+
 }

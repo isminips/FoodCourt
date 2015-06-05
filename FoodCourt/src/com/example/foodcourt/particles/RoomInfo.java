@@ -201,10 +201,10 @@ public class RoomInfo {
         double maxDist, dist;
         if (width < height) {
             maxDist = width/2;
-            dist = Math.min(particle.x - positionX, positionX+width - particle.x) ;
+            dist = Math.min(particle.getX() - positionX, positionX+width - particle.getX()) ;
         } else {
             maxDist = height/2;
-            dist = Math.min(particle.y - positionY, positionY+height - particle.y);
+            dist = Math.min(particle.getY() - positionY, positionY+height - particle.getY());
         }
 
 //        double a = (dist/maxDist);
@@ -228,8 +228,22 @@ public class RoomInfo {
             return true;
         }
 
-        if (isRoom && positionY == 8.2 && (point.getY() + yMovement > positionY)) {
+        if (isRoom && positionY == 8.2 && (point.getY() + yMovement > positionY + height)) {
             return true;
+        }
+
+        return false;
+    }
+
+    public boolean enterInfeasibleRoom(Point point, double xMovement, double yMovement) {
+        String[] aislesWithoutRooms = {"C16","C9","C8","C7","C6","C5"};
+        if (!isRoom && Arrays.asList(aislesWithoutRooms).contains(name)) {
+            if (point.getY() + yMovement > positionY + height) {
+                return true;
+            }
+            if (point.getY() + yMovement < positionY) {
+                return true;
+            }
         }
 
         return false;

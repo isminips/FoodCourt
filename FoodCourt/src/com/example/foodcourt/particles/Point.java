@@ -15,8 +15,8 @@ package com.example.foodcourt.particles;
  */
 public class Point {
 
-    private double x;
-    private double y;
+    protected double x;
+    protected double y;
 
     /**
      * Constructor - zero value
@@ -196,5 +196,7 @@ public class Point {
         return Double.doubleToLongBits(this.y) == Double.doubleToLongBits(other.y);
     }
     
-    
+    public double euclideanDistance(Point p) {
+        return Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
+    }
 }
