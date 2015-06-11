@@ -19,7 +19,10 @@ import com.example.foodcourt.particles.Sensors;
 import com.example.foodcourt.particles.Visualisation;
 import com.example.foodcourt.particles.WifiScanReceiver;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,6 +43,7 @@ public class LocalizationActivity extends BaseActivity {
 	private HashMap<String, RoomInfo> roomInfo;
 	private double compassAngle = 0;
 	double totalArea = 0;
+	private String wifiResults;
 
 	private final Handler particleUpdater = new Handler();
 	final int PARTICLE_UPDATE_DELAY = 2000; //milliseconds
@@ -117,7 +121,9 @@ public class LocalizationActivity extends BaseActivity {
 	}
 
 	private void unregisterWifiSensors() {
-		unregisterReceiver(wifiReciever);
+		if(wifiReciever != null) {
+			unregisterReceiver(wifiReciever);
+		}
 	}
 
 	public void initializeViews() {
@@ -153,16 +159,39 @@ public class LocalizationActivity extends BaseActivity {
 
 	public void updateBayes(String[] wifis) {
 		logCollection(Arrays.asList(wifis), "Wifi results obtained: " + wifis.length + " results", "");
-		if (ParticleFilter.calculateSpread(particleCloud.getParticles()) < CONVERGENCE_SIZE) {
+		//if (ParticleFilter.calculateSpread(particleCloud.getParticles()) < CONVERGENCE_SIZE) {
+
 			saveBayes(wifis, particleCloud.getEstiPos());
-		} else {
-			wifiManager.startScan();
-		}
+
+		//} else {
+			//wifiManager.startScan();
+		//}
 	}
 
 	private void saveBayes(String[] wifis, Point estimatedPosition) {
-		// TODO;
+
+		for (int i=0; i<wifis.length; i++) {
+
+			wifiResults+= wifis[i] + "," + estimatedPosition.toString() + "," + "\n";
+		}
+		log("wifiresult: " +wifiResults);
+		try {
+			File myFile = new File("/sdcard/wifi.txt");
+			myFile.createNewFile();
+			FileOutputStream fOut = new FileOutputStream(myFile);
+			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+			myOutWriter.append(wifiResults);
+			myOutWriter.close();
+			fOut.close();
+			toast("Done writing file in SD");
+			log(wifiResults);
+		} catch (Exception e) {
+			toast(e.getMessage());
+		}
+
 	}
+
+
 
 	private void updateVisualization() {
 		visualisation.setParticles(particleCloud.getParticles());
@@ -193,6 +222,7 @@ public class LocalizationActivity extends BaseActivity {
 		unregisterWifiSensors();
 		toast("Initialized Bayes");
 		initializeWifiSensors();
+		wifiManager.startScan();
 	}
 
 	public void senseBayes(View view) {
