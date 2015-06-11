@@ -9,24 +9,21 @@ import java.util.List;
  */
 public class Cloud {
 
-    private Point estiPos;
+    private Point estimatedPosition;
     private List<Particle> particles;
-    private final Point inerPoint;
 
-    public Cloud(Point estiPos, List<Particle> particles, Point inerPoint) {
-        this.estiPos = estiPos;
+    public Cloud(Point estimatedPosition, List<Particle> particles) {
+        this.estimatedPosition = estimatedPosition;
         this.particles = particles;
-        this.inerPoint = inerPoint;
     }
 
-    public Cloud(Point estiPos, List<Particle> particles) {
-        this.estiPos = estiPos;
+    public Cloud(List<Particle> particles) {
         this.particles = particles;
-        this.inerPoint = estiPos;
+        this.estimatedPosition = Cloud.calculateCenter(particles);
     }
 
-    public void setEstiPos(Point estiPos) {
-        this.estiPos = estiPos;
+    public void setEstimatedPosition(Point estimatedPosition) {
+        this.estimatedPosition = estimatedPosition;
     }
 
     public void setParticles(List<Particle> particles) {
@@ -37,15 +34,36 @@ public class Cloud {
         return "ParticleNb : " + particles.size();
     }
 
-    public Point getEstiPos() {
-        return estiPos;
+    public Point getEstimatedPosition() {
+        return estimatedPosition;
     }
 
     public List<Particle> getParticles() {
         return particles;
     }
 
-    public Point getInerPoint() {
-        return inerPoint;
+    // Barycentre of particle cloud
+    public static Point calculateCenter(List<Particle> particles) {
+        double x = 0;
+        double y = 0;
+        double sum = 0;
+
+        for (Particle result : particles) {
+            x += result.getX();
+            y += result.getY();
+            sum ++;
+        }
+        return new Point(x / sum, y / sum);
+    }
+
+    //Spread of particles
+    public double calculateSpread() {
+        double diff = 0;
+
+        for (Particle particle : particles) {
+            diff += particle.euclideanDistance(estimatedPosition);
+        }
+
+        return diff / particles.size();
     }
 }

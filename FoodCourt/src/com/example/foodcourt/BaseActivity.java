@@ -45,6 +45,10 @@ public class BaseActivity extends Activity {
 		alertDialog.show();
 	}
 
+	protected void log(Object object) {
+		log(object.toString());
+	}
+
 	protected void log(String message) {
 		System.out.println(message);
 	}

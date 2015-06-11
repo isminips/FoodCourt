@@ -1,5 +1,6 @@
 package com.example.foodcourt.knn;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
@@ -79,6 +80,34 @@ public class Knn {
 		} else {
 			return Label.Activities.Standing;
 		}
+	}
+
+	public static Label.Activities classify(String data, ArrayList<Instance> trainingSet) {
+		ArrayList<Instance> newInstances;
+		ArrayList<Neighbor> distances;
+		ArrayList<Neighbor> neighbors;
+		Label.Activities classification;
+		Instance classificationInstance;
+
+		FileReader newReader = new FileReader(new ByteArrayInputStream(data.getBytes()));
+		newInstances = newReader.buildInstances();
+
+		int walking = 0, standing = 0;
+		do {
+			classificationInstance = newInstances.remove(0);
+
+			distances = Knn.calculateDistances(trainingSet, classificationInstance);
+			neighbors = Knn.getNearestNeighbors(distances);
+			classification = Knn.determineMajority(neighbors);
+
+			switch(classification) {
+				case Walking: walking++; break;
+				case Standing: standing++; break;
+				default: throw new IllegalArgumentException("UNKNOWN classification");
+			}
+		} while (!newInstances.isEmpty());
+
+		return walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
 	}
 
 	public static ArrayList<Neighbor> getNearestNeighbors(

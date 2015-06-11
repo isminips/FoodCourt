@@ -5,37 +5,36 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 
 import com.example.foodcourt.LocalizationActivity;
+import com.example.foodcourt.knn.FileReader;
+import com.example.foodcourt.knn.Instance;
+import com.example.foodcourt.knn.Knn;
+import com.example.foodcourt.knn.Label;
 
-import java.util.HashMap;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 
-/**
- * Created by Gebruiker on 27-5-2015.
- */
-public class Sensors extends AsyncTask<String, InertialPoint, Void> implements SensorEventListener {
+public class Sensors extends AsyncTask<String, Movement, Void> implements SensorEventListener {
 
-    private InertialPoint inertialPoint;
-    private Integer deviceOrientation = null;      //Orientation direction for filtering offline map
-    private SensorManager mSensorManager;
-    private Sensor linearAcceleration;
-    private Sensor magnetometer;
-    private Sensor gravity;
-    private float[] mLinearAcceleration = null;
-    private float[] mGeomagnetic = null;
-    private float[] mGravity = null;
     private LocalizationActivity activity;
 
-    public static final int SPEEDBREAK = 40;
-    public static final Double JITTER_OFFSET = 0.5;
-    public static final Float[] ACCELERATION_OFFSET = new Float[]{0.25f, 0.5f, -0.3f};
+    private SensorManager sensorManager;
+    private Sensor magnetometer;
+    private Sensor accelerometer;
+
+    private float[] mGeomagnetic = null;
+    private float[] mGravity = null;
+
     public static final Double BUILDING_ORIENTATION = 0.0;
 
-    public Sensors(LocalizationActivity activity, Point initialInertialPoint) {
+    private String movementData = "";
+    private ArrayList<Instance> trainingSet;
+
+    public Sensors(LocalizationActivity activity) {
         this.activity = activity;
-        this.inertialPoint = new InertialPoint(initialInertialPoint);
     }
 
     @Override
@@ -43,7 +42,8 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
         initializeSensors();
 
         while (!isCancelled()) {
-            processSensorValues();
+            if (countLines(movementData) > 10)
+                processSensorValues();
         }
 
         unregisterSensors();
@@ -55,41 +55,57 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
      * Android onProgressUpdate.
      */
     @Override
-    protected void onProgressUpdate(InertialPoint... points) {
-        activity.updateParticleCloud(points[0]);
+    protected void onProgressUpdate(Movement... movements) {
+        activity.updateParticleCloud(movements[0]);
     }
 
+    private int countLines(String str) {
+        if(str == null || str.isEmpty()) {
+            return 0;
+        }
+        int lines = 1;
+        int pos = 0;
+        while ((pos = str.indexOf("\n", pos) + 1) != 0) {
+            lines++;
+        }
+        return lines;
+    }
 
     private void initializeSensors() {
-        //wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
-        linearAcceleration = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        gravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        sensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
+        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        int SENSOR_SENSITIVITY = SensorManager.SENSOR_DELAY_FASTEST;
+        int SENSOR_SENSITIVITY = SensorManager.SENSOR_DELAY_NORMAL;
 
-        if (linearAcceleration != null) {
-            mSensorManager.registerListener(this, linearAcceleration, SENSOR_SENSITIVITY);
-        } else {
-            System.out.println("Error: Accelerometer not found");
-        }
         if (magnetometer != null) {
-            mSensorManager.registerListener(this, magnetometer, SENSOR_SENSITIVITY);
+            sensorManager.registerListener(this, magnetometer, SENSOR_SENSITIVITY);
         } else {
             System.out.println("Error: Magnetometer not found");
         }
-        if (gravity != null) {
-            mSensorManager.registerListener(this, gravity, SENSOR_SENSITIVITY);
+        if (accelerometer != null) {
+            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+            // Load KNN training set
+            try {
+                InputStream trainStream = activity.getAssets().open("trainingSet.csv");
+                FileReader trainReader = new FileReader(trainStream);
+                trainingSet = trainReader.buildInstances();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
-            System.out.println("Error: Gravity not found");
+            System.out.println("Error: Accelerometer not found");
         }
     }
 
     private void unregisterSensors() {
-        mSensorManager.unregisterListener(this, linearAcceleration);
-        mSensorManager.unregisterListener(this, gravity);
-        mSensorManager.unregisterListener(this, magnetometer);
+        if (accelerometer != null) {
+            sensorManager.unregisterListener(this, accelerometer);
+        }
+        if (magnetometer != null) {
+            sensorManager.unregisterListener(this, magnetometer);
+        }
     }
 
     /**
@@ -98,34 +114,36 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
      */
     private boolean processSensorValues() {
         boolean success = false;
-        if (mGravity != null && mGeomagnetic != null && mLinearAcceleration != null) {
 
-            float R[] = new float[16];
-            float I[] = new float[16];
-            float iR[] = new float[16];
+        if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.length() != 0) {
+            float R[] = new float[9];
+            float I[] = new float[9];
             success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
 
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
+                double azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll
 
-                boolean invert = android.opengl.Matrix.invertM(iR, 0, R, 0);
-                if (invert) {
+                if (trainingSet != null) {
+                    Label.Activities activity = Knn.classify(movementData, trainingSet);
 
-                    InertialData results = InertialData.getDatas(iR, mLinearAcceleration, orientation, BUILDING_ORIENTATION, JITTER_OFFSET, ACCELERATION_OFFSET);
-                    Point prevPoint = inertialPoint.getPoint();
-                    inertialPoint = InertialPoint.move(inertialPoint, results, System.nanoTime(), SPEEDBREAK);
+                    if (activity == Label.Activities.Walking) {
+                        // TODO create proper angle
+                        double deviceOrientation = Math.toDegrees(azimuth) + BUILDING_ORIENTATION;
+                        // TODO determine best step size
+                        double stepSize = 0.7;
 
-                    double[] movement = inertialPoint.getMovement(prevPoint);
-                    if (Math.abs(movement[0]) + Math.abs(movement[1]) > 0.001) {
-                        publishProgress(inertialPoint);
+                        // TODO determine step size based on elapsed time
+                        double[] movement = new double[]{stepSize * Math.cos(deviceOrientation), stepSize * Math.sin(deviceOrientation)};
+
+                        publishProgress(new Movement(movement, deviceOrientation));
                     }
                 }
-
             }
             mGravity = null;
             mGeomagnetic = null;
-            mLinearAcceleration = null;
+            movementData = "";
         }
 
         return success;
@@ -133,12 +151,17 @@ public class Sensors extends AsyncTask<String, InertialPoint, Void> implements S
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_GRAVITY) {
-            mGravity = event.values;
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             mGeomagnetic = event.values;
-        } else if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-            mLinearAcceleration = event.values;
+        } else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            mGravity = event.values;
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+            float time = Math.round(event.timestamp / 1000000000.0);
+
+            double magnitude = Math.sqrt(x * x + y * y + z * z);
+            movementData += "Undetermined," + magnitude + "," + time + "\n";
         }
     }
 

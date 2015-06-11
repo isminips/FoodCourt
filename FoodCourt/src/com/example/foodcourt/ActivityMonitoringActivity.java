@@ -10,13 +10,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.foodcourt.activity.ActivityList;
 import com.example.foodcourt.knn.FileReader;
 import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.knn.Knn;
 import com.example.foodcourt.knn.Label;
-import com.example.foodcourt.knn.Neighbor;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -178,31 +177,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	public Label.Activities classify() {
 		starttime = 0;
 
-		ArrayList<Instance> newInstances = null;
-		ArrayList<Neighbor> distances = null;
-		ArrayList<Neighbor> neighbors = null;
-		Label.Activities classification = null;
-		Instance classificationInstance = null;
-
-		FileReader newReader = new FileReader(new ByteArrayInputStream(data.getBytes()));
-		newInstances = newReader.buildInstances();
-
-		int walking = 0, standing = 0;
-		do {
-			classificationInstance = newInstances.remove(0);
-
-			distances = Knn.calculateDistances(trainingSet, classificationInstance);
-			neighbors = Knn.getNearestNeighbors(distances);
-			classification = Knn.determineMajority(neighbors);
-
-			switch(classification) {
-				case Walking: walking++; break;
-				case Standing: standing++; break;
-				default: throw new IllegalArgumentException("UNKNOWN classification");
-			}
-		} while (!newInstances.isEmpty());
-
-		Label.Activities currentActivity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
+		Label.Activities currentActivity = Knn.classify(data, trainingSet);
 		currentActivityLabel.setText(currentActivity.toString());
 
 		log("Current activity: " + currentActivity.toString());

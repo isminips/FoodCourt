@@ -219,29 +219,29 @@ public class RoomInfo {
         return dist/maxDist;
     }
 
-    public boolean collidesWithWall(Point point, double xMovement, double yMovement) {
-        if (isRoom && (point.getX() + xMovement < positionX || point.getX() + xMovement > positionX + width)) {
+    public boolean collidesWithWall(Point point) {
+        if (isRoom && (point.getX() < positionX || point.getX() > positionX + width)) {
             return true;
         }
 
-        if (isRoom && positionY == 0 && (point.getY() + yMovement < positionY)) {
+        if (isRoom && positionY == 0 && (point.getY() < positionY)) {
             return true;
         }
 
-        if (isRoom && positionY == 8.2 && (point.getY() + yMovement > positionY + height)) {
+        if (isRoom && positionY == 8.2 && (point.getY() > positionY + height)) {
             return true;
         }
 
         return false;
     }
 
-    public boolean enterInfeasibleRoom(Point point, double xMovement, double yMovement) {
+    public boolean enterInfeasibleRoom(Point point) {
         String[] aislesWithoutRooms = {"C16","C9","C8","C7","C6","C5"};
         if (!isRoom && Arrays.asList(aislesWithoutRooms).contains(name)) {
-            if (point.getY() + yMovement > positionY + height) {
+            if (point.getY() > positionY + height) {
                 return true;
             }
-            if (point.getY() + yMovement < positionY) {
+            if (point.getY() < positionY) {
                 return true;
             }
         }

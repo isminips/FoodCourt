@@ -1,4 +1,4 @@
-package com.example.foodcourt;
+package com.example.foodcourt.activity;
 
 import com.example.foodcourt.knn.Label;
 

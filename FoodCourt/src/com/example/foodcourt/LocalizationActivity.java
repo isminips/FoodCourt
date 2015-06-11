@@ -10,7 +10,7 @@ import android.view.KeyEvent;
 import android.view.View;
 
 import com.example.foodcourt.particles.Cloud;
-import com.example.foodcourt.particles.InertialPoint;
+import com.example.foodcourt.particles.Movement;
 import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
 import com.example.foodcourt.particles.Point;
@@ -82,7 +82,7 @@ public class LocalizationActivity extends BaseActivity {
 	}
 
 	private void initializeSensors() {
-		sensors = new Sensors(this, particleCloud.getInerPoint());
+		sensors = new Sensors(this);
 		sensors.execute();
 	}
 
@@ -145,23 +145,20 @@ public class LocalizationActivity extends BaseActivity {
 		updateVisualization();
 	}
 
-	public void updateParticleCloud(InertialPoint inertialPoint) {
-		if (inertialPoint.getPoint().equals(particleCloud.getInerPoint())) {
-			return;
-		}
+	public void updateParticleCloud(Movement movement) {
+		log(movement);
+		compassAngle = movement.getAngle();
 
-		compassAngle = inertialPoint.getInertialData().getAzimuth();
+		particleCloud = ParticleFilter.filter(particleCloud, movement, roomInfo);
 
-		particleCloud = ParticleFilter.filter(particleCloud, particleCloud.getEstiPos(), inertialPoint, roomInfo);
-
-		log(particleCloud.getEstiPos().toString(3) + " " + particleCloud.getParticleCount());
+		log(particleCloud.getEstimatedPosition().toString(3) + " " + particleCloud.getParticleCount());
 	}
 
 	public void updateBayes(String[] wifis) {
 		logCollection(Arrays.asList(wifis), "Wifi results obtained: " + wifis.length + " results", "");
-		//if (ParticleFilter.calculateSpread(particleCloud.getParticles()) < CONVERGENCE_SIZE) {
+		//if (particleCloud.calculateSpread() < CONVERGENCE_SIZE) {
 
-			saveBayes(wifis, particleCloud.getEstiPos());
+			saveBayes(wifis, particleCloud.getEstimatedPosition());
 
 		//} else {
 			//wifiManager.startScan();
@@ -195,14 +192,12 @@ public class LocalizationActivity extends BaseActivity {
 
 	private void updateVisualization() {
 		visualisation.setParticles(particleCloud.getParticles());
-		visualisation.setEstimatedPoint(particleCloud.getEstiPos());
+		visualisation.setEstimatedPoint(particleCloud.getEstimatedPosition());
 		visualisation.setCompassAngle(compassAngle);
-		visualisation.setEstimatedRoom(getEstimatedRoom(particleCloud.getEstiPos()));
+		visualisation.setEstimatedRoom(getEstimatedRoom(particleCloud.getEstimatedPosition()));
 	}
 
 	private String getEstimatedRoom(Point estimatedPoint) {
-		log("Spread: "+ParticleFilter.calculateSpread(particleCloud.getParticles()));
-
 		for(RoomInfo r : roomInfo.values()) {
 			if (r.containsLocation(estimatedPoint)) {
 				return r.getName();
