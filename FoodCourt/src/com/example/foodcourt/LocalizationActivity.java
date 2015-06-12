@@ -33,9 +33,7 @@ public class LocalizationActivity extends BaseActivity {
 	private Sensors sensors;
 	private WifiManager wifiManager;
 	private WifiScanReceiver wifiReciever;
-	private String wifis[];
 	public final static int NUMBER_PARTICLES = 1000;
-	public final static double CLOUD_DISPLACEMENT = 0.2;
 	public final static double CONVERGENCE_SIZE = 10;
 	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
 	private Cloud particleCloud;
@@ -69,7 +67,9 @@ public class LocalizationActivity extends BaseActivity {
 			roomInfo = RoomInfo.load(getAssets().open("RoomInfo.csv"));
 			for(RoomInfo r : roomInfo.values()) {
 				r.makeDrawArea(visualisation.getScreenSize(), TOTAL_DRAW_SIZE);
-				totalArea += r.getArea();
+				if (r.isRoom() || r.isAislePlaceholder()) {
+					totalArea += r.getArea();
+				}
 			}
 
 			visualisation.setRooms(roomInfo.values());
@@ -138,7 +138,9 @@ public class LocalizationActivity extends BaseActivity {
 
 		List<Particle> particles = new ArrayList<Particle>();
 		for(RoomInfo room : roomInfo.values()) {
-			particles.addAll(room.fillWithParticles(totalArea, NUMBER_PARTICLES));
+			if (room.isRoom() || room.isAislePlaceholder()) {
+				particles.addAll(room.fillWithParticles(totalArea, NUMBER_PARTICLES));
+			}
 		}
 		particleCloud = new Cloud(mapCenter, particles);
 
@@ -171,7 +173,7 @@ public class LocalizationActivity extends BaseActivity {
 
 			wifiResults+= results.get(i) + "," + getEstimatedRoom(estimatedPosition)  + "\n";
 		}
-		log("wifiresult: " +wifiResults);
+		log("wifiresult: " + wifiResults);
 		try {
 			File myFile = new File("/sdcard/wifi.txt");
 			myFile.createNewFile();
@@ -198,13 +200,17 @@ public class LocalizationActivity extends BaseActivity {
 	}
 
 	private String getEstimatedRoom(Point estimatedPoint) {
+		String roomName = "";
+
 		for(RoomInfo r : roomInfo.values()) {
-			if (r.containsLocation(estimatedPoint)) {
+			if ((r.isRoom() || (r.isAisle() && !r.isAislePlaceholder())) && r.containsLocation(estimatedPoint)) {
 				return r.getName();
+			} else if (r.isAislePlaceholder() && r.containsLocation(estimatedPoint)) {
+				roomName = r.getName();
 			}
 		}
 
-		return "";
+		return roomName;
 	}
 
 	// BUTTONS

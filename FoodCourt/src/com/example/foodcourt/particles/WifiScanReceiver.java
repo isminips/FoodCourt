@@ -19,11 +19,9 @@ public class WifiScanReceiver extends BroadcastReceiver {
     private LocalizationActivity activity;
 
     public WifiScanReceiver(LocalizationActivity activity, WifiManager wifiManager) {
-
         super();
         this.activity = activity;
         this.wifiManager = wifiManager;
-
     }
 
     @SuppressLint("UseValueOf")
@@ -39,12 +37,9 @@ public class WifiScanReceiver extends BroadcastReceiver {
         for (ScanResult scan : wifiScanList) {
             int channel = ((scan.frequency - 2412) / 5) + 1;  //calculates accurately for channels 1-13. Channel 14 is not generally available.
             results.add(scan.BSSID + "," + scan.SSID + "," + scan.level + "," + channel);
-
         }
 
-
         activity.updateBayes(results);
-
     }
 
 

@@ -34,19 +34,12 @@ public class ParticleFilter {
             if (particle.getX() < 0 || particle.getY() < 0 || particle.getX() > LocalizationActivity.TOTAL_DRAW_SIZE.getX() || particle.getY() > LocalizationActivity.TOTAL_DRAW_SIZE.getY()) {
                 particle.kill();
             }
-            // Cut out the empty corners
-            if ((particle.getX() < 12 && particle.getY() > 8.2) || (particle.getX() > 56 && particle.getY() < 6.1)) {
-                particle.kill();
-            }
 
             for (RoomInfo room : rooms.values()) {
-                if (room.containsLocation(particle.beforeMoving(movement))) {
-                    if (room.collidesWithWall(particle.getPoint())) {
-                        particle.kill();
-                    }
-                    if (room.enterInfeasibleRoom(particle.getPoint())) {
-                        particle.kill();
-                    }
+                if (room.isBlocked() && room.containsLocation(particle)) {
+                    particle.kill();
+                } else if (room.containsLocation(particle.beforeMoving(movement)) && room.collidesWithWall(particle)) {
+                    particle.kill();
                 }
             }
 

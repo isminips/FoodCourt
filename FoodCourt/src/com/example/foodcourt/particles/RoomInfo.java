@@ -25,14 +25,20 @@ import java.util.List;
  */
 public class RoomInfo {
 
-    public static final String[] HEADINGS = {"Name", "Width", "Height", "isRoom", "GlobalX", "GlobalY"};
+    public enum RoomType {
+        Room,
+        Aisle,
+        Blocked
+    }
+
+    public static final String[] HEADINGS = {"Name", "Width", "Height", "Type", "GlobalX", "GlobalY"};
     protected String name;
     protected double width;
     protected double height;
     protected double widthUnits;
     protected double heightUnits;
     protected Rectangle drawArea;
-    protected boolean isRoom;
+    protected RoomType type;
     protected double positionX;  //offset to place the room on global co-ordinates, used to measure distance between two points
     protected double positionY;  //offset to place the room on global co-ordinates, used to measure distance between two points
     protected Rectangle area;
@@ -48,11 +54,24 @@ public class RoomInfo {
         name = parts[0];
         width = Double.parseDouble(parts[1]);
         height = Double.parseDouble(parts[2]);
-        isRoom = Boolean.parseBoolean(parts[3]);
+        type = determineRoomType(parts[3]);
 
         positionX = Double.parseDouble(parts[4]);
         positionY = Double.parseDouble(parts[5]);
         area = new Rectangle(positionX, positionY, width, height);
+    }
+
+    private RoomType determineRoomType(String type) {
+        if(type.equals("ROOM")) {
+            return RoomType.Room;
+        }
+        else if(type.equals("AISLE")) {
+            return RoomType.Aisle;
+        }
+        else if(type.equals("BLOCKED")) {
+            return RoomType.Blocked;
+        }
+        return null;
     }
 
     public Rectangle makeDrawArea(android.graphics.Point screensize, Point totalDrawSize) {
@@ -132,13 +151,31 @@ public class RoomInfo {
     }
 
     /**
-     * Whether the room represents an enclosed room or open ended corridor.
-     * Affects whether the Android Detector starts at 0 (corridor) or 1 (room) for references.
-     *
-     * @return True, if a room. False, if a corridor.
+     * Whether the room represents an enclosed room.
      */
-    public int isRoom() {
-        return isRoom ? 1 : 0;
+    public boolean isRoom() {
+        return type.equals(RoomType.Room);
+    }
+
+    /**
+     * Whether the room represents an aisle.
+     */
+    public boolean isAisle() {
+        return type.equals(RoomType.Aisle);
+    }
+
+    /**
+     * Whether the room represents a blocked area.
+     */
+    public boolean isBlocked() {
+        return type.equals(RoomType.Blocked);
+    }
+
+    /**
+     * Whether the room represents the entire aisle
+     */
+    public boolean isAislePlaceholder() {
+        return isAisle() && name.equals("Aisle");
     }
 
     public double getArea() {
@@ -193,59 +230,7 @@ public class RoomInfo {
         return roomInfo;
     }
 
-    public double getBorderProximity(Particle particle) {
-        if (!isRoom) {
-            return 1;
-        }
-
-        double maxDist, dist;
-        if (width < height) {
-            maxDist = width/2;
-            dist = Math.min(particle.getX() - positionX, positionX+width - particle.getX()) ;
-        } else {
-            maxDist = height/2;
-            dist = Math.min(particle.getY() - positionY, positionY+height - particle.getY());
-        }
-
-//        double a = (dist/maxDist);
-//        double b = a * LocalizationActivity.CLOUD_RANGE;
-//
-//        return Math.exp(b)/1.6;
-
-//        double a = Math.pow((dist/maxDist),2);
-//        double b = a * LocalizationActivity.CLOUD_RANGE;
-//
-//        return Math.exp(b);
-        return dist/maxDist;
-    }
-
     public boolean collidesWithWall(Point point) {
-        if (isRoom && (point.getX() < positionX || point.getX() > positionX + width)) {
-            return true;
-        }
-
-        if (isRoom && positionY == 0 && (point.getY() < positionY)) {
-            return true;
-        }
-
-        if (isRoom && positionY == 8.2 && (point.getY() > positionY + height)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public boolean enterInfeasibleRoom(Point point) {
-        String[] aislesWithoutRooms = {"C16","C9","C8","C7","C6","C5"};
-        if (!isRoom && Arrays.asList(aislesWithoutRooms).contains(name)) {
-            if (point.getY() > positionY + height) {
-                return true;
-            }
-            if (point.getY() < positionY) {
-                return true;
-            }
-        }
-
-        return false;
+        return isRoom() && (point.getX() < positionX || point.getX() > positionX + width);
     }
 }

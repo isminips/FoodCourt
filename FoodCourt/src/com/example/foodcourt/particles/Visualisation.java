@@ -51,6 +51,7 @@ public class Visualisation extends View {
         screenSize.y -= 300;
 
         particlePaint.setColor(Color.RED);
+
         roomPaint.setColor(Color.BLUE);
         roomPaint.setStyle(Paint.Style.STROKE);
         roomPaint.setStrokeWidth(5);
@@ -116,7 +117,8 @@ public class Visualisation extends View {
 
         if(rooms != null) {
             for (RoomInfo r : rooms) {
-                canvas.drawRect(r.getDrawArea(), roomPaint);
+                if (r.isRoom())
+                    canvas.drawRect(r.getDrawArea(), roomPaint);
             }
         }
 
