@@ -42,8 +42,8 @@ public class WifiScanReceiver extends BroadcastReceiver {
 
         }
 
-        activity.updateBayes(wifis);
-       // activity.updateBayes(results);
+
+        activity.updateBayes(results);
 
     }
 

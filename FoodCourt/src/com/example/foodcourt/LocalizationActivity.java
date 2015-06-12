@@ -43,7 +43,7 @@ public class LocalizationActivity extends BaseActivity {
 	private HashMap<String, RoomInfo> roomInfo;
 	private double compassAngle = 0;
 	double totalArea = 0;
-	private String wifiResults;
+	private String wifiResults="";
 
 	private final Handler particleUpdater = new Handler();
 	final int PARTICLE_UPDATE_DELAY = 2000; //milliseconds
@@ -154,22 +154,22 @@ public class LocalizationActivity extends BaseActivity {
 		log(particleCloud.getEstimatedPosition().toString(3) + " " + particleCloud.getParticleCount());
 	}
 
-	public void updateBayes(String[] wifis) {
-		logCollection(Arrays.asList(wifis), "Wifi results obtained: " + wifis.length + " results", "");
-		//if (particleCloud.calculateSpread() < CONVERGENCE_SIZE) {
+	public void updateBayes(ArrayList<String> results) {
+		logCollection(Arrays.asList(results), "Wifi results obtained: " + results.size() + " results", "");
+		if (particleCloud.calculateSpread() < CONVERGENCE_SIZE) {
 
-			saveBayes(wifis, particleCloud.getEstimatedPosition());
+			saveBayes(results, particleCloud.getEstimatedPosition());
 
-		//} else {
-			//wifiManager.startScan();
-		//}
+		} else {
+			wifiManager.startScan();
+		}
 	}
 
-	private void saveBayes(String[] wifis, Point estimatedPosition) {
+	private void saveBayes(ArrayList<String> results, Point estimatedPosition) {
 
-		for (int i=0; i<wifis.length; i++) {
+		for (int i=0; i<results.size(); i++) {
 
-			wifiResults+= wifis[i] + "," + estimatedPosition.toString() + "," + "\n";
+			wifiResults+= results.get(i) + "," + getEstimatedRoom(estimatedPosition)  + "\n";
 		}
 		log("wifiresult: " +wifiResults);
 		try {
