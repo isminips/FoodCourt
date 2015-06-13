@@ -17,6 +17,8 @@ public class BaseActivity extends Activity {
 			t = Toast.makeText(this, message, Toast.LENGTH_SHORT);
 		t.setText(message);
 		t.show();
+
+		log(message);
 	}
 
 	protected void showInfo(String title, String message) {
@@ -51,6 +53,10 @@ public class BaseActivity extends Activity {
 
 	protected void log(String message) {
 		System.out.println(message);
+	}
+
+	protected void logCollection(Iterable collection, String title) {
+		logCollection(collection, title, "");
 	}
 
 	protected void logCollection(Iterable collection, String title, String message) {

@@ -175,7 +175,7 @@ public class RoomInfo {
      * Whether the room represents the entire aisle
      */
     public boolean isAislePlaceholder() {
-        return isAisle() && name.equals("Aisle");
+        return isAisle() && name.startsWith("Aisle");
     }
 
     public double getArea() {
@@ -232,5 +232,9 @@ public class RoomInfo {
 
     public boolean collidesWithWall(Point point) {
         return isRoom() && (point.getX() < positionX || point.getX() > positionX + width);
+    }
+
+    public String toString() {
+        return name;
     }
 }

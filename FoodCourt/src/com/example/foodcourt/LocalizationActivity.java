@@ -6,10 +6,10 @@ import android.graphics.drawable.Drawable;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.KeyEvent;
 import android.view.View;
 
 import com.example.foodcourt.particles.Cloud;
+import com.example.foodcourt.particles.Compass;
 import com.example.foodcourt.particles.Movement;
 import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
@@ -17,16 +17,15 @@ import com.example.foodcourt.particles.Point;
 import com.example.foodcourt.particles.RoomInfo;
 import com.example.foodcourt.particles.Sensors;
 import com.example.foodcourt.particles.Visualisation;
-import com.example.foodcourt.particles.WifiScanReceiver;
+import com.example.foodcourt.rssi.RSSIDatabase;
+import com.example.foodcourt.rssi.WifiResult;
+import com.example.foodcourt.rssi.WifiScanReceiver;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 public class LocalizationActivity extends BaseActivity {
 
@@ -34,14 +33,16 @@ public class LocalizationActivity extends BaseActivity {
 	private WifiManager wifiManager;
 	private WifiScanReceiver wifiReciever;
 	public final static int NUMBER_PARTICLES = 1000;
-	public final static double CONVERGENCE_SIZE = 10;
+	public final static double CONVERGENCE_SIZE = 2;
 	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
 	private Cloud particleCloud;
 	private Visualisation visualisation;
+	private Compass compass;
 	private HashMap<String, RoomInfo> roomInfo;
-	private double compassAngle = 0;
 	double totalArea = 0;
-	private String wifiResults="";
+	private TreeMap<Long, List<WifiResult>> wifiScanData;
+	private TreeMap<Long, Movement> movementData;
+	private RSSIDatabase rssiDatabase;
 
 	private final Handler particleUpdater = new Handler();
 	final int PARTICLE_UPDATE_DELAY = 2000; //milliseconds
@@ -55,7 +56,6 @@ public class LocalizationActivity extends BaseActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
 
 		initializeViews();
 
@@ -78,6 +78,7 @@ public class LocalizationActivity extends BaseActivity {
 		}
 
 		initializeParticleCloud();
+		initializeRSSI();
 		initializeSensors();
 	}
 
@@ -92,6 +93,8 @@ public class LocalizationActivity extends BaseActivity {
 
 		registerReceiver(wifiReciever, new IntentFilter(
 				WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+
+		wifiManager.startScan();
 	}
 
 	@Override
@@ -99,21 +102,12 @@ public class LocalizationActivity extends BaseActivity {
 		super.onBackPressed();
 		stop();
 	}
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event)
-	{
-		if ((keyCode == KeyEvent.KEYCODE_BACK))
-		{
-			stop();
-		}
-		return super.onKeyDown(keyCode, event);
-	}
 
 	private void stop() {
 		unregisterSensors();
 		unregisterWifiSensors();
 		particleUpdater.removeCallbacks(particleUpdate);
-		visualisation.clear();
+		rssiDatabase.writeToSD();
 	}
 
 	private void unregisterSensors() {
@@ -122,111 +116,140 @@ public class LocalizationActivity extends BaseActivity {
 
 	private void unregisterWifiSensors() {
 		if(wifiReciever != null) {
-			unregisterReceiver(wifiReciever);
+			try {
+				unregisterReceiver(wifiReciever);
+			} catch (IllegalArgumentException e) {
+			}
 		}
 	}
 
 	public void initializeViews() {
 		setContentView(R.layout.activity_localization);
-		visualisation = (Visualisation) findViewById(R.id.view);
+		visualisation = (Visualisation) findViewById(R.id.visualization);
+		compass = (Compass) findViewById(R.id.compass);
 		particleUpdater.postDelayed(particleUpdate, PARTICLE_UPDATE_DELAY);
 	}
 
 	// PARTICLE CLOUD
 	private void initializeParticleCloud() {
-		Point mapCenter = new Point(36, 7.15);
-
 		List<Particle> particles = new ArrayList<Particle>();
 		for(RoomInfo room : roomInfo.values()) {
 			if (room.isRoom() || room.isAislePlaceholder()) {
 				particles.addAll(room.fillWithParticles(totalArea, NUMBER_PARTICLES));
 			}
 		}
-		particleCloud = new Cloud(mapCenter, particles);
+		particleCloud = new Cloud(particles);
+
+		movementData = new TreeMap<Long, Movement>();
 
 		updateVisualization();
 	}
 
 	public void updateParticleCloud(Movement movement) {
 		log(movement);
-		compassAngle = movement.getAngle();
+
+		movementData.put(System.currentTimeMillis(), movement);
+
+		compass.setCompassAngle(movement.getAngle());
 
 		particleCloud = ParticleFilter.filter(particleCloud, movement, roomInfo);
 
-		log(particleCloud.getEstimatedPosition().toString(3) + " " + particleCloud.getParticleCount());
+		//log(particleCloud.getEstimatedPosition().toString(3) + " " + particleCloud.getParticleCount());
 	}
 
-	public void updateBayes(ArrayList<String> results) {
-		logCollection(Arrays.asList(results), "Wifi results obtained: " + results.size() + " results", "");
-		if (particleCloud.calculateSpread() < CONVERGENCE_SIZE) {
-
-			saveBayes(results, particleCloud.getEstimatedPosition());
-
-		} else {
-			wifiManager.startScan();
-		}
-	}
-
-	private void saveBayes(ArrayList<String> results, Point estimatedPosition) {
-
-		for (int i=0; i<results.size(); i++) {
-
-			wifiResults+= results.get(i) + "," + getEstimatedRoom(estimatedPosition)  + "\n";
-		}
-		log("wifiresult: " + wifiResults);
-		try {
-			File myFile = new File("/sdcard/wifi.txt");
-			myFile.createNewFile();
-			FileOutputStream fOut = new FileOutputStream(myFile);
-			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-			myOutWriter.append(wifiResults);
-			myOutWriter.close();
-			fOut.close();
-			toast("Done writing file in SD");
-			log(wifiResults);
-		} catch (Exception e) {
-			toast(e.getMessage());
-		}
-
-	}
-
-
-
-	private void updateVisualization() {
-		visualisation.setParticles(particleCloud.getParticles());
-		visualisation.setEstimatedPoint(particleCloud.getEstimatedPosition());
-		visualisation.setCompassAngle(compassAngle);
-		visualisation.setEstimatedRoom(getEstimatedRoom(particleCloud.getEstimatedPosition()));
-	}
-
-	private String getEstimatedRoom(Point estimatedPoint) {
-		String roomName = "";
+	public RoomInfo getEstimatedRoom(Point estimatedPoint) {
+		RoomInfo room = null;
 
 		for(RoomInfo r : roomInfo.values()) {
 			if ((r.isRoom() || (r.isAisle() && !r.isAislePlaceholder())) && r.containsLocation(estimatedPoint)) {
-				return r.getName();
+				return r;
 			} else if (r.isAislePlaceholder() && r.containsLocation(estimatedPoint)) {
-				roomName = r.getName();
+				room = r; // rooms can overlap with aisle placeholder
 			}
 		}
 
-		return roomName;
+		return room;
+	}
+
+	// VISUALIZATION
+	private void updateVisualization() {
+		visualisation.setParticles(particleCloud.getParticles());
+		visualisation.setEstimatedPoint(particleCloud.getEstimatedPosition());
+		visualisation.setEstimatedRoom(getEstimatedRoom(particleCloud.getEstimatedPosition()));
+	}
+
+	// RSSI
+	private void initializeRSSI() {
+		initializeWifiSensors();
+		resetRSSIdatabase();
+		resetRSSImeasurements();
+	}
+
+	public void updateRSSI(List<WifiResult> results) {
+		log("Wifi results obtained: " + results.size() + " results");
+
+		if (results.size() > 0) {
+			wifiScanData.put(results.get(0).getTimestamp(), results);
+		}
+
+		wifiManager.startScan();
+	}
+
+	private void resetRSSIdatabase() {
+		rssiDatabase = new RSSIDatabase();
+	}
+
+	private void resetRSSImeasurements() {
+		wifiScanData = new TreeMap<Long, List<WifiResult>>();
+		if (rssiDatabase != null) {
+			rssiDatabase.updateTime();
+		}
 	}
 
 	// BUTTONS
 	public void initializePA(View view) {
 		toast("Reset particle cloud");
 		initializeParticleCloud();
+		resetRSSImeasurements();
 	}
 
-	public void initializeBayes(View view) {
-		unregisterWifiSensors();
-		toast("Initialized Bayes");
-		initializeWifiSensors();
-		wifiManager.startScan();
+	public void initializeRSSI(View view) {
+		toast("Initialized RSSI database");
+		initializeRSSI();
 	}
 
-	public void senseBayes(View view) {
-		toast("TODO");
+	public void senseRSSI(View view) {
+		log("Movement data: " + movementData.size() + " measurements");
+		log("RSSI data: " + wifiScanData.size() + " measurements");
+		visualisation.setEstimatedRoomRSSI(null);
+
+		// If we don't have RSSI data, what are we doing here?
+		if (wifiScanData.size() == 0) {
+			wifiManager.startScan();
+		}
+
+		// Can we create a database?
+		if (particleCloud.calculateSpread() > CONVERGENCE_SIZE) {
+			log("Particles have not converged yet");
+		} else {
+			rssiDatabase.createRSSIdatabase(this, particleCloud, wifiScanData, movementData);
+		}
+
+		// log
+		rssiDatabase.createRSSIdatabase(this, particleCloud, wifiScanData, movementData); // TODO remove this line
+		log("RSSI database: " + rssiDatabase.size() + " items");
+
+		if (wifiScanData.size() > 0 && rssiDatabase.size() > 0) {
+			toast("Estimating position based on RSSI...");
+
+			List<WifiResult> lastScan = wifiScanData.pollFirstEntry().getValue();
+			//logCollection(lastScan, "Last scan");
+
+			String estimatedRoom = rssiDatabase.determineRoom(lastScan);
+			visualisation.setEstimatedRoomRSSI(estimatedRoom);
+			toast("Estimated room: " + estimatedRoom);
+		} else {
+			toast("Could not gather RSSI data");
+		}
 	}
 }

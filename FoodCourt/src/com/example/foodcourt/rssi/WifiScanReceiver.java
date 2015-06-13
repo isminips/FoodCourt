@@ -1,4 +1,4 @@
-package com.example.foodcourt.particles;
+package com.example.foodcourt.rssi;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WifiScanReceiver extends BroadcastReceiver {
-    String wifis[];
     WifiManager wifiManager;
 
     private LocalizationActivity activity;
@@ -27,19 +26,15 @@ public class WifiScanReceiver extends BroadcastReceiver {
     @SuppressLint("UseValueOf")
     public void onReceive(Context c, Intent intent) {
         List<ScanResult> wifiScanList = wifiManager.getScanResults();
-        wifis = new String[wifiScanList.size()];
-        ArrayList<String> results = new ArrayList<String>();
-
-        for(int i = 0; i < wifiScanList.size(); i++){
-            wifis[i] = ((wifiScanList.get(i)).toString());
-        }
+        List<WifiResult> results = new ArrayList<WifiResult>();
+        long timestamp = System.currentTimeMillis();
 
         for (ScanResult scan : wifiScanList) {
             int channel = ((scan.frequency - 2412) / 5) + 1;  //calculates accurately for channels 1-13. Channel 14 is not generally available.
-            results.add(scan.BSSID + "," + scan.SSID + "," + scan.level + "," + channel);
+            results.add(new WifiResult(scan.BSSID, scan.SSID, scan.level, channel, timestamp));
         }
 
-        activity.updateBayes(results);
+        activity.updateRSSI(results);
     }
 
 

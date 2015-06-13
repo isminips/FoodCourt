@@ -5,11 +5,25 @@
     android:background="#ffffff"
     android:orientation="vertical">
 
-    <view
-        android:id="@+id/view"
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="250dp"
-        class="com.example.foodcourt.particles.Visualisation"/>
+        android:layout_height="250dp">
+        <view
+            android:id="@+id/visualization"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            class="com.example.foodcourt.particles.Visualisation"/>
+        <view
+            android:id="@+id/compass"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_alignTop="@id/visualization"
+            android:layout_alignBottom="@id/visualization"
+            android:layout_alignLeft="@id/visualization"
+            android:layout_alignRight="@id/visualization"
+            class="com.example.foodcourt.particles.Compass"/>
+
+    </RelativeLayout>
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -23,19 +37,19 @@
             android:onClick="initializePA"
             android:text="Initial Belief PA" />
         <Button
-            android:id="@+id/initial_bayes"
+            android:id="@+id/initial_rssi"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="fill_parent"
-            android:onClick="initializeBayes"
-            android:text="Initial Belief Bayes" />
+            android:onClick="initializeRSSI"
+            android:text="Initial Belief RSSI" />
         <Button
-            android:id="@+id/sense_bayes"
+            android:id="@+id/sense_rssi"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="fill_parent"
-            android:onClick="senseBayes"
-            android:text="Sense Bayes" />
+            android:onClick="senseRSSI"
+            android:text="Sense RSSI" />
     </LinearLayout>
 
 </LinearLayout>

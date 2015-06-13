@@ -12,22 +12,14 @@ public class Cloud {
     private Point estimatedPosition;
     private List<Particle> particles;
 
-    public Cloud(Point estimatedPosition, List<Particle> particles) {
-        this.estimatedPosition = estimatedPosition;
-        this.particles = particles;
-    }
-
     public Cloud(List<Particle> particles) {
         this.particles = particles;
         this.estimatedPosition = Cloud.calculateCenter(particles);
     }
 
-    public void setEstimatedPosition(Point estimatedPosition) {
-        this.estimatedPosition = estimatedPosition;
-    }
-
     public void setParticles(List<Particle> particles) {
         this.particles = particles;
+        this.estimatedPosition = calculateCenter(particles);
     }
 
     public String getParticleCount() {
@@ -58,6 +50,18 @@ public class Cloud {
 
     //Spread of particles
     public double calculateSpread() {
+        double diff = 0;
+
+        for (Particle particle : particles) {
+            diff += particle.euclideanDistance(estimatedPosition);
+        }
+
+        return diff / particles.size();
+    }
+
+    //Spread of particles
+    public static double calculateSpread(List<Particle> particles) {
+        Point estimatedPosition = calculateCenter(particles);
         double diff = 0;
 
         for (Particle particle : particles) {

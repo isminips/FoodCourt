@@ -1,6 +1,8 @@
 package com.example.foodcourt.particles;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -11,7 +13,10 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.example.foodcourt.R;
+
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Main android activity for the application.
@@ -24,15 +29,15 @@ public class Visualisation extends View {
     private final android.graphics.Point screenSize = new android.graphics.Point();
     private Point totalDrawSize;
     private Collection<RoomInfo> rooms;
-    private Collection<Particle> particles;
+    private List<Particle> particles;
     private Point estimatedPoint;
-    private String estimatedRoom;
-    private double compassAngle;
+    private String estimatedRoomRSSI;
+    private RoomInfo estimatedRoom;
     private static final float RADIUS = 5;
     private final Paint particlePaint = new Paint();
     private final Paint estimatedPaint = new Paint();
     private final Paint roomPaint = new Paint();
-    private final Paint compassPaint = new Paint();
+    private Bitmap rssiIndicator;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,9 +65,7 @@ public class Visualisation extends View {
         estimatedPaint.setStrokeWidth(10);
         estimatedPaint.setTextSize(50);
 
-        compassPaint.setColor(Color.DKGRAY);
-        compassPaint.setStrokeWidth(10);
-        compassPaint.setTextSize(40);
+        rssiIndicator = BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_dialog_map);
 
         clear();
     }
@@ -81,7 +84,7 @@ public class Visualisation extends View {
         this.invalidate();
     }
 
-    public void setParticles(Collection<Particle> particles) {
+    public void setParticles(List<Particle> particles) {
         this.particles = particles;
         this.invalidate();
     }
@@ -91,6 +94,14 @@ public class Visualisation extends View {
         this.invalidate();
     }
 
+    public void setEstimatedRoom(RoomInfo room) {
+        estimatedRoom = room;
+    }
+
+    public void setEstimatedRoomRSSI(String room) {
+        estimatedRoomRSSI = room;
+    }
+
     /**
      * Resets the points on the floor plan image and refreshes the view.
      */
@@ -98,10 +109,10 @@ public class Visualisation extends View {
         this.particles = null;
         this.rooms = null;
         this.estimatedPoint = null;
+        this.estimatedRoom = null;
+        this.estimatedRoomRSSI = null;
         this.invalidate();
     }
-
-
 
     /**
      * Android onDraw.
@@ -117,19 +128,18 @@ public class Visualisation extends View {
 
         if(rooms != null) {
             for (RoomInfo r : rooms) {
-                if (r.isRoom())
+                if (r.isRoom() || (r.isAisle() && !r.isAislePlaceholder()))
                     canvas.drawRect(r.getDrawArea(), roomPaint);
+
+                if (estimatedRoomRSSI != null && estimatedRoomRSSI.length() != 0 && !r.isBlocked() && r.getName().equals(estimatedRoomRSSI)) {
+                    canvas.drawBitmap(
+                            rssiIndicator,
+                            r.getDrawArea().left + (r.getDrawArea().width()/2) - (rssiIndicator.getWidth()/2),
+                            r.getDrawArea().top + (r.getDrawArea().height()/2) - (rssiIndicator.getHeight()/2),
+                            estimatedPaint);
+                }
             }
         }
-
-        canvas.save(Canvas.MATRIX_SAVE_FLAG); //Saving the canvas and later restoring it so only this image will be rotated.
-        float centerx = getWidth()/2;
-        float centery = getHeight()/2;
-        canvas.rotate((float) -compassAngle, centerx, centery);
-        canvas.drawLine(centerx, centery+100, centerx, centery-100, compassPaint);
-        canvas.drawText("N", centerx-13, centery - 115, compassPaint);
-        canvas.drawText("S", centerx-13, centery + 135, compassPaint);
-        canvas.restore();
 
         if(particles != null) {
             for (Particle p : particles) {
@@ -140,12 +150,12 @@ public class Visualisation extends View {
 
         if(estimatedPoint != null) {
             Point pixel = locationToPixel(estimatedPoint);
-            canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS*5, estimatedPaint);
+            canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS * (float)(50 / Cloud.calculateSpread(particles)), estimatedPaint);
         }
 
         if(estimatedRoom != null) {
             canvas.drawText("Room:", getWidth() - getWidth() / 7, 50, estimatedPaint);
-            canvas.drawText(estimatedRoom, getWidth() - getWidth() / 7, 150, estimatedPaint);
+            canvas.drawText(estimatedRoom.getName(), getWidth() - getWidth() / 7, 150, estimatedPaint);
         }
     }
 
@@ -165,13 +175,5 @@ public class Visualisation extends View {
 
     public void setTotalDrawSize(Point totalDrawSize) {
         this.totalDrawSize = totalDrawSize;
-    }
-
-    public void setCompassAngle(double angle) {
-        compassAngle = angle;
-    }
-
-    public void setEstimatedRoom(String room) {
-        estimatedRoom = room;
     }
 }
