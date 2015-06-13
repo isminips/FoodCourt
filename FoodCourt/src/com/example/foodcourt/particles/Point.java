@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.example.foodcourt.particles;
 
 /**
@@ -131,6 +127,10 @@ public class Point {
         return (int) y;
     }
 
+    public double euclideanDistance(Point p) {
+        return Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
+    }
+
     /**
      * String representation of the object.
      *     
@@ -139,16 +139,6 @@ public class Point {
     @Override
     public String toString() {
         return x + "," + y;
-    }
-    
-    /**
-     * String representation of the object.
-     *
-     * @param fieldSeparator Field separator used in the string.
-     * @return
-     */
-    public String toString(String fieldSeparator) {
-        return x + fieldSeparator + y;
     }
 
     /**
@@ -160,17 +150,6 @@ public class Point {
     public String toString(int decimals) {
         double t = Math.pow(10,decimals);
         return ((double)Math.round(x * t)/t) + "," + ((double)Math.round(y * t)/t);
-    }
-
-    /**
-     * Scale coordinates by ratio of pixels.
-     *
-     * @param xPixels x-coordinate pixel ratio.
-     * @param yPixels y-coordinate pixel ratio.
-     * @return
-     */
-    public Point drawPoint(double xPixels, double yPixels) {
-        return new Point(x * xPixels, y * yPixels);
     }
 
     @Override
@@ -194,9 +173,5 @@ public class Point {
             return false;
         }
         return Double.doubleToLongBits(this.y) == Double.doubleToLongBits(other.y);
-    }
-    
-    public double euclideanDistance(Point p) {
-        return Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
     }
 }

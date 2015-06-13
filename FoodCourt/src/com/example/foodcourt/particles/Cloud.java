@@ -1,12 +1,7 @@
 package com.example.foodcourt.particles;
 
-
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA. User: johanchateau Date: 04/10/13 Time: 12:17 To
- * change this template use File | Settings | File Templates.
- */
 public class Cloud {
 
     private Point estimatedPosition;
@@ -22,8 +17,8 @@ public class Cloud {
         this.estimatedPosition = calculateCenter(particles);
     }
 
-    public String getParticleCount() {
-        return "ParticleNb : " + particles.size();
+    public int getParticleCount() {
+        return particles.size();
     }
 
     public Point getEstimatedPosition() {

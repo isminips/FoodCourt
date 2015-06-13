@@ -6,23 +6,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.example.foodcourt.R;
-
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Main android activity for the application.
- *
- * @author Pierre Rousseau
- */
 public class Visualisation extends View {
 
     protected Drawable floorPlanImage;
@@ -70,10 +62,6 @@ public class Visualisation extends View {
         clear();
     }
 
-    /**
-     * Assigns the floor plan image.
-     * @param floorPlanImage
-     */
     public void setFloorPlan(Drawable floorPlanImage) {
         this.floorPlanImage = floorPlanImage;
         floorPlanImage.setBounds(0, 0, screenSize.x, screenSize.y);
@@ -81,17 +69,14 @@ public class Visualisation extends View {
 
     public void setRooms(Collection<RoomInfo> rooms) {
         this.rooms = rooms;
-        this.invalidate();
     }
 
     public void setParticles(List<Particle> particles) {
         this.particles = particles;
-        this.invalidate();
     }
 
     public void setEstimatedPoint(Point point) {
         this.estimatedPoint = point;
-        this.invalidate();
     }
 
     public void setEstimatedRoom(RoomInfo room) {
@@ -111,6 +96,10 @@ public class Visualisation extends View {
         this.estimatedPoint = null;
         this.estimatedRoom = null;
         this.estimatedRoomRSSI = null;
+        this.update();
+    }
+
+    public void update() {
         this.invalidate();
     }
 
@@ -122,15 +111,18 @@ public class Visualisation extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        // Draw background
         if(floorPlanImage != null) {
             floorPlanImage.draw(canvas);
         }
 
+        // Draw the room borders
         if(rooms != null) {
             for (RoomInfo r : rooms) {
                 if (r.isRoom() || (r.isAisle() && !r.isAislePlaceholder()))
                     canvas.drawRect(r.getDrawArea(), roomPaint);
 
+                // Draw indicator for room estimated by RSSI
                 if (estimatedRoomRSSI != null && estimatedRoomRSSI.length() != 0 && !r.isBlocked() && r.getName().equals(estimatedRoomRSSI)) {
                     canvas.drawBitmap(
                             rssiIndicator,
@@ -141,6 +133,7 @@ public class Visualisation extends View {
             }
         }
 
+        // Draw all particles
         if(particles != null) {
             for (Particle p : particles) {
                 Point pixel = locationToPixel(p.getPoint());
@@ -148,11 +141,13 @@ public class Visualisation extends View {
             }
         }
 
+        // Draw the estimated point (by particles) with the size bigger as the spread decreases
         if(estimatedPoint != null) {
             Point pixel = locationToPixel(estimatedPoint);
             canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS * (float)(50 / Cloud.calculateSpread(particles)), estimatedPaint);
         }
 
+        // Write the estimated room (by particles) in the upper right corner
         if(estimatedRoom != null) {
             canvas.drawText("Room:", getWidth() - getWidth() / 7, 50, estimatedPaint);
             canvas.drawText(estimatedRoom.getName(), getWidth() - getWidth() / 7, 150, estimatedPaint);

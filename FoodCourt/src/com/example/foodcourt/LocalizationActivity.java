@@ -44,12 +44,12 @@ public class LocalizationActivity extends BaseActivity {
 	private TreeMap<Long, Movement> movementData;
 	private RSSIDatabase rssiDatabase;
 
-	private final Handler particleUpdater = new Handler();
-	final int PARTICLE_UPDATE_DELAY = 2000; //milliseconds
-	final Runnable particleUpdate = new Runnable() {
+	private final Handler visualizationUpdater = new Handler();
+	final int VISUALIZATION_UPDATE_DELAY = 2000; //milliseconds
+	final Runnable visualizationUpdate = new Runnable() {
 		public void run() {
 			updateVisualization();
-			particleUpdater.postDelayed(this, PARTICLE_UPDATE_DELAY);
+			visualizationUpdater.postDelayed(this, VISUALIZATION_UPDATE_DELAY);
 		}
 	};
 
@@ -66,7 +66,7 @@ public class LocalizationActivity extends BaseActivity {
 
 			roomInfo = RoomInfo.load(getAssets().open("RoomInfo.csv"));
 			for(RoomInfo r : roomInfo.values()) {
-				r.makeDrawArea(visualisation.getScreenSize(), TOTAL_DRAW_SIZE);
+				r.setDrawDimensions(visualisation.getScreenSize(), TOTAL_DRAW_SIZE);
 				if (r.isRoom() || r.isAislePlaceholder()) {
 					totalArea += r.getArea();
 				}
@@ -106,7 +106,7 @@ public class LocalizationActivity extends BaseActivity {
 	private void stop() {
 		unregisterSensors();
 		unregisterWifiSensors();
-		particleUpdater.removeCallbacks(particleUpdate);
+		visualizationUpdater.removeCallbacks(visualizationUpdate);
 		rssiDatabase.writeToSD();
 	}
 
@@ -127,7 +127,7 @@ public class LocalizationActivity extends BaseActivity {
 		setContentView(R.layout.activity_localization);
 		visualisation = (Visualisation) findViewById(R.id.visualization);
 		compass = (Compass) findViewById(R.id.compass);
-		particleUpdater.postDelayed(particleUpdate, PARTICLE_UPDATE_DELAY);
+		visualizationUpdater.postDelayed(visualizationUpdate, VISUALIZATION_UPDATE_DELAY);
 	}
 
 	// PARTICLE CLOUD
@@ -153,8 +153,6 @@ public class LocalizationActivity extends BaseActivity {
 		compass.setCompassAngle(movement.getAngle());
 
 		particleCloud = ParticleFilter.filter(particleCloud, movement, roomInfo);
-
-		//log(particleCloud.getEstimatedPosition().toString(3) + " " + particleCloud.getParticleCount());
 	}
 
 	public RoomInfo getEstimatedRoom(Point estimatedPoint) {
@@ -176,6 +174,8 @@ public class LocalizationActivity extends BaseActivity {
 		visualisation.setParticles(particleCloud.getParticles());
 		visualisation.setEstimatedPoint(particleCloud.getEstimatedPosition());
 		visualisation.setEstimatedRoom(getEstimatedRoom(particleCloud.getEstimatedPosition()));
+
+		visualisation.update();
 	}
 
 	// RSSI

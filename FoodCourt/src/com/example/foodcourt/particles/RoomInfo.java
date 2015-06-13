@@ -1,12 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.example.foodcourt.particles;
 
 import android.graphics.Rect;
-
-import com.example.foodcourt.LocalizationActivity;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,12 +11,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Information about rooms within a floor.
- * TODO Adapt to having spacing different to 1m.
- *
- * @author Greg Albiston
- */
 public class RoomInfo {
 
     public enum RoomType {
@@ -33,17 +21,15 @@ public class RoomInfo {
 
     public static final String[] HEADINGS = {"Name", "Width", "Height", "Type", "GlobalX", "GlobalY"};
     protected String name;
+    protected RoomType type;
+    protected double x;  //offset to place the room on global co-ordinates, used to measure distance between two points
+    protected double y;  //offset to place the room on global co-ordinates, used to measure distance between two points
     protected double width;
     protected double height;
-    protected double widthUnits;
-    protected double heightUnits;
-    protected Rectangle drawArea;
-    protected RoomType type;
-    protected double positionX;  //offset to place the room on global co-ordinates, used to measure distance between two points
-    protected double positionY;  //offset to place the room on global co-ordinates, used to measure distance between two points
-    protected Rectangle area;
+
     protected android.graphics.Point screenSize;
     protected Point totalDrawSize;
+
     /**
      * Constructor
      *
@@ -56,9 +42,8 @@ public class RoomInfo {
         height = Double.parseDouble(parts[2]);
         type = determineRoomType(parts[3]);
 
-        positionX = Double.parseDouble(parts[4]);
-        positionY = Double.parseDouble(parts[5]);
-        area = new Rectangle(positionX, positionY, width, height);
+        x = Double.parseDouble(parts[4]);
+        y = Double.parseDouble(parts[5]);
     }
 
     private RoomType determineRoomType(String type) {
@@ -74,17 +59,9 @@ public class RoomInfo {
         return null;
     }
 
-    public Rectangle makeDrawArea(android.graphics.Point screensize, Point totalDrawSize) {
+    public void setDrawDimensions(android.graphics.Point screensize, Point totalDrawSize) {
         this.screenSize = screensize;
         this.totalDrawSize = totalDrawSize;
-
-        Point start = locationToPixel(positionX, positionY);
-        Point end = locationToPixel(positionX + width, positionY + height);
-        drawArea = new Rectangle(start.getX(), start.getY(), end.getX()-start.getX(), end.getY()-start.getY());
-        widthUnits = Math.round(drawArea.width / width);
-        heightUnits = Math.round(drawArea.height / height);
-
-        return drawArea;
     }
 
     private Point locationToPixel(double x, double y) {
@@ -107,11 +84,14 @@ public class RoomInfo {
      * @return
      */
     public Rect getDrawArea() {
+        Point start = locationToPixel(x, y);
+        Point end = locationToPixel(x + width, y + height);
+
         return new Rect(
-                drawArea.x.intValue(),
-                drawArea.y.intValue(),
-                drawArea.x.intValue()+drawArea.width.intValue(),
-                drawArea.y.intValue()+drawArea.height.intValue()
+                start.getXint(),
+                start.getYint(),
+                end.getXint(),
+                end.getYint()
         );
     }
 
@@ -142,12 +122,15 @@ public class RoomInfo {
         return height;
     }
 
-    public boolean containsLocation(Point point){
-        return area.contains(point);
+    public double getArea() {
+        return width * height;
     }
 
-    public boolean containsPixel(Point point){
-        return drawArea.contains(point);
+    public boolean containsLocation(Point point){
+        double x = point.getX();
+        double y = point.getY();
+
+        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
     }
 
     /**
@@ -178,23 +161,23 @@ public class RoomInfo {
         return isAisle() && name.startsWith("Aisle");
     }
 
-    public double getArea() {
-        return width * height;
-    }
-
     public List<Particle> fillWithParticles(double totalArea, int numParticles) {
         double allowedParticles = (getArea() / totalArea) * numParticles;
 
         List<Particle> particles = new ArrayList<Particle>();
         for(int i = 0; i < allowedParticles; i++) {
-            double x = positionX + Math.random() * width;
-            double y = positionY + Math.random() * height;
+            double x = this.x + Math.random() * width;
+            double y = this.y + Math.random() * height;
 
             Particle p = new Particle(x, y);
             particles.add(p);
         }
 
         return particles;
+    }
+
+    public boolean collidesWithWall(Point point) {
+        return isRoom() && (point.getX() < x || point.getX() > x + width);
     }
 
     /**
@@ -228,10 +211,6 @@ public class RoomInfo {
         stream.close();
 
         return roomInfo;
-    }
-
-    public boolean collidesWithWall(Point point) {
-        return isRoom() && (point.getX() < positionX || point.getX() > positionX + width);
     }
 
     public String toString() {
