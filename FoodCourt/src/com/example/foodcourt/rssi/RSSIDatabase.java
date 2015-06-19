@@ -17,6 +17,27 @@ import java.util.TreeMap;
 
 public class RSSIDatabase {
 
+    /*
+    Room1
+        RSSI1 (mac address)
+            RSSI1 WifiResult at time 1 estimated in Room1
+            RSSI1 WifiResult at time 2 estimated in Room1
+            RSSI1 WifiResult at time 3 estimated in Room1
+            ...
+        RSSI2
+            RSSI2 WifiResult at time 1 estimated in Room1
+            ...
+        ...
+    Room2
+        RSSI1
+            RSSI1 WifiResult at time 1 estimated in Room2
+            RSSI1 WifiResult at time 2 estimated in Room2
+            ...
+        RSSI2
+            RSSI2 WifiResult at time 1 estimated in Room2
+            ...
+    ...
+     */
     private TreeMap<String, TreeMap<String, List<WifiResult>>> database;
     private long lastMappedTime;
 
@@ -182,6 +203,7 @@ public class RSSIDatabase {
             String room = entry.getKey();
 
             double distance = 0;
+            int matches = 0;
 
             for (WifiResult result: scanResult) {
                 List<WifiResult> compList = roomInfo.get(result.getBSSID());
@@ -194,8 +216,13 @@ public class RSSIDatabase {
                     compLevel += compare.getLevel();
                 }
 
+                // Normalize over number of times this RSSI/mac is found in this room
                 distance += Math.abs((level - compLevel) / compList.size());
+                matches++;
             }
+
+            // Normalize over the amount of different RSSI/mac results in this room
+            distance /= matches;
 
             distances.add(new Neighbor(distance, room));
         }
