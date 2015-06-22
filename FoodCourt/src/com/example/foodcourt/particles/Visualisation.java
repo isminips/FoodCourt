@@ -12,6 +12,8 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.example.foodcourt.LocalizationActivity;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -21,8 +23,7 @@ public class Visualisation extends View {
     private final android.graphics.Point screenSize = new android.graphics.Point();
     private Point totalDrawSize;
     private Collection<RoomInfo> rooms;
-    private List<Particle> particles;
-    private Point estimatedPoint;
+    private Cloud cloud;
     private String estimatedRoomRSSI;
     private RoomInfo estimatedRoom;
     private static final float RADIUS = 5;
@@ -33,11 +34,6 @@ public class Visualisation extends View {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Constructor
-     * @param context
-     * @param attrs
-     */
     public Visualisation(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -71,12 +67,8 @@ public class Visualisation extends View {
         this.rooms = rooms;
     }
 
-    public void setParticles(List<Particle> particles) {
-        this.particles = particles;
-    }
-
-    public void setEstimatedPoint(Point point) {
-        this.estimatedPoint = point;
+    public void setCloud(Cloud cloud) {
+        this.cloud = cloud;
     }
 
     public void setEstimatedRoom(RoomInfo room) {
@@ -91,9 +83,8 @@ public class Visualisation extends View {
      * Resets the points on the floor plan image and refreshes the view.
      */
     public void clear() {
-        this.particles = null;
+        this.cloud = null;
         this.rooms = null;
-        this.estimatedPoint = null;
         this.estimatedRoom = null;
         this.estimatedRoomRSSI = null;
         this.update();
@@ -105,7 +96,6 @@ public class Visualisation extends View {
 
     /**
      * Android onDraw.
-     * @param canvas
      */
     @Override
     protected void onDraw(Canvas canvas) {
@@ -133,19 +123,24 @@ public class Visualisation extends View {
             }
         }
 
-        // Draw all particles
-        if(particles != null) {
-            for (Particle p : particles) {
+        if(cloud != null) {
+            // Draw all particles
+            for (Particle p : cloud.getParticles()) {
                 Point pixel = locationToPixel(p.getPoint());
                 canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS, particlePaint);
             }
+
+            // Draw the estimated point (by particles) with the size bigger as the spread decreases
+            Point pixel = locationToPixel(cloud.getEstimatedPosition());
+            double spread = cloud.getSpread();
+            if (spread < LocalizationActivity.CONVERGENCE_SIZE) {
+                estimatedPaint.setColor(Color.GREEN);
+            } else {
+                estimatedPaint.setColor(0xFFFFCC00);
+            }
+            canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS * Math.min(10, Math.max(3, (float)(40 / spread))), estimatedPaint);
         }
 
-        // Draw the estimated point (by particles) with the size bigger as the spread decreases
-        if(estimatedPoint != null) {
-            Point pixel = locationToPixel(estimatedPoint);
-            canvas.drawCircle(pixel.getXfl(), pixel.getYfl(), RADIUS * (float)(50 / Cloud.calculateSpread(particles)), estimatedPaint);
-        }
 
         // Write the estimated room (by particles) in the upper right corner
         if(estimatedRoom != null) {

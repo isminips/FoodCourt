@@ -1,7 +1,5 @@
 package com.example.foodcourt.rssi;
 
-import com.example.foodcourt.particles.RoomInfo;
-
 public class WifiResult {
     private String BSSID;
     private String SSID;
@@ -9,7 +7,7 @@ public class WifiResult {
     private int channel;
     private long timestamp;
 
-    private RoomInfo room;
+    private String room;
 
     public WifiResult(String BSSID, String SSID, int level, int channel, long timestamp) {
         this.BSSID = BSSID;
@@ -39,23 +37,23 @@ public class WifiResult {
         return timestamp;
     }
 
-    public RoomInfo getRoom() {
+    public String getRoom() {
         return room;
     }
 
-    public void setRoom(RoomInfo room) {
+    public void setRoom(String room) {
         this.room = room;
     }
 
     public boolean hasRoom() {
-        return room != null;
+        return room != null && room.length() != 0;
     }
 
     public String toString() {
-        String result = BSSID + "," + SSID + "," + level + "," + channel;
+        String result = BSSID + "," + SSID + "," + level + "," + channel + "," + timestamp;
 
-        if (room != null) {
-            result += "," + room.getName();
+        if (hasRoom()) {
+            result += "," + room;
         }
 
         return result;

@@ -4,10 +4,18 @@ public class Movement {
 
     private double[] movement;
     private double angle;
+    private int timeMS;
 
     public Movement(double[] movement, double angle) {
         this.movement = movement;
         this.angle = angle;
+        this.timeMS = 1000;
+    }
+
+    public Movement(double[] movement, double angle, int timeMS) {
+        this.movement = movement;
+        this.angle = angle;
+        this.timeMS = timeMS;
     }
 
     public double[] getMovement() {
@@ -26,7 +34,11 @@ public class Movement {
         return angle;
     }
 
+    public int getTimeMS() {
+        return timeMS;
+    }
+
     public String toString() {
-        return "Movement: X:"+getX() + " Y:"+getY();
+        return "Movement: X:"+getX() + " Y:"+getY() + " A:"+getAngle() + " T:"+getTimeMS();
     }
 }

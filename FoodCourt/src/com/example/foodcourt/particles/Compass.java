@@ -15,13 +15,6 @@ public class Compass extends View {
     private double compassAngle;
     private final Paint compassPaint = new Paint();
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Constructor
-     * @param context
-     * @param attrs
-     */
     public Compass(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -36,20 +29,24 @@ public class Compass extends View {
         compassPaint.setTextSize(40);
     }
 
-    /**
-     * Android onDraw.
-     * @param canvas
-     */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         float centerx = getWidth()/2;
         float centery = getHeight()/2;
-        canvas.rotate((float) -compassAngle, centerx, centery);
-        canvas.drawLine(centerx, centery+100, centerx, centery-100, compassPaint);
-        canvas.drawText("N", centerx-13, centery - 115, compassPaint);
-        canvas.drawText("S", centerx-13, centery + 135, compassPaint);
+        canvas.rotate((float) -(compassAngle), centerx, centery);
+        canvas.drawLine(centerx-100, centery, centerx+100, centery, compassPaint);
+        canvas.drawLine(centerx+98, centery+2, centerx+70, centery-30, compassPaint);
+        canvas.drawLine(centerx+98, centery-2, centerx+70, centery+30, compassPaint);
+
+        /*  COMPASS
+                90
+
+          180        0
+
+               270
+         */
     }
 
     public void setCompassAngle(double angle) {

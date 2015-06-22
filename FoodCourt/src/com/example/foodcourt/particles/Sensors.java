@@ -26,10 +26,12 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     private Sensor accelerometer;
 
     private float[] mGeomagnetic = null;
+    private int mGeomagnetic_size = 0;
     private float[] mGravity = null;
 
-    public static final Double BUILDING_ORIENTATION = 0.0;
+    public static final Double BUILDING_ORIENTATION = -113.7;
 
+    private long measureStart = System.currentTimeMillis();
     private String movementData = "";
     private ArrayList<Instance> trainingSet;
 
@@ -84,7 +86,7 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
             System.out.println("Error: Magnetometer not found");
         }
         if (accelerometer != null) {
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, accelerometer, SENSOR_SENSITIVITY);
 
             // Load KNN training set
             try {
@@ -118,32 +120,55 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
         if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.length() != 0) {
             float R[] = new float[9];
             float I[] = new float[9];
+
+            mGeomagnetic[0] /= mGeomagnetic_size;
+            mGeomagnetic[1] /= mGeomagnetic_size;
+            mGeomagnetic[2] /= mGeomagnetic_size;
+
             success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+
+            mGravity = null;
+            mGeomagnetic = null;
+            mGeomagnetic_size = 0;
 
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                double azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll
+                double azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll (in radians)
 
                 if (trainingSet != null) {
                     Label.Activities activity = Knn.classify(movementData, trainingSet);
 
                     if (activity == Label.Activities.Walking) {
                         // TODO create proper angle
-                        double deviceOrientation = Math.toDegrees(azimuth) + BUILDING_ORIENTATION;
-                        // TODO determine best step size
-                        double stepSize = 0.7;
+                        double deviceOrientationDegrees = Math.toDegrees(azimuth) + BUILDING_ORIENTATION;
+                        deviceOrientationDegrees = deviceOrientationDegrees >= 0 ? deviceOrientationDegrees : deviceOrientationDegrees + 360;
 
-                        // TODO determine step size based on elapsed time
-                        double[] movement = new double[]{stepSize * Math.cos(deviceOrientation), stepSize * Math.sin(deviceOrientation)};
+                        // TODO determine best speed
+                        double speed = 1; // speed in m/s
 
-                        publishProgress(new Movement(movement, deviceOrientation));
+                        // Get elapsed time
+                        String[] lines = movementData.split("\n");
+                        String[] firstLine = lines[0].split(",");
+                        String[] lastLine = lines[lines.length-1].split(",");
+                        int elapsedMs = (int) (Double.parseDouble(lastLine[lastLine.length - 1]) - Double.parseDouble(firstLine[firstLine.length - 1]));
+
+                        // Calculate step size
+                        double stepSize = speed * elapsedMs/1000;
+
+                        // Add direction to movement
+                        double[] movement = new double[]{
+                                stepSize * Math.cos(Math.toRadians(deviceOrientationDegrees)),
+                                stepSize * -Math.sin(Math.toRadians(deviceOrientationDegrees))
+                        };
+
+                        publishProgress(new Movement(movement, deviceOrientationDegrees, elapsedMs));
                     }
                 }
             }
-            mGravity = null;
-            mGeomagnetic = null;
+
             movementData = "";
+            measureStart = System.currentTimeMillis();
         }
 
         return success;
@@ -152,13 +177,20 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            mGeomagnetic = event.values;
+            if (mGeomagnetic == null) {
+                mGeomagnetic = event.values;
+            } else {
+                mGeomagnetic[0] += event.values[0];
+                mGeomagnetic[1] += event.values[1];
+                mGeomagnetic[2] += event.values[2];
+            }
+            mGeomagnetic_size++;
         } else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             mGravity = event.values;
             float x = event.values[0];
             float y = event.values[1];
             float z = event.values[2];
-            float time = Math.round(event.timestamp / 1000000000.0);
+            float time = System.currentTimeMillis() - measureStart;
 
             double magnitude = Math.sqrt(x * x + y * y + z * z);
             movementData += "Undetermined," + magnitude + "," + time + "\n";

@@ -5,41 +5,26 @@ import com.example.foodcourt.particles.Cloud;
 import com.example.foodcourt.particles.Movement;
 import com.example.foodcourt.particles.Point;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 public class RSSIDatabase {
 
-    /*
-    Room1
-        RSSI1 (mac address)
-            RSSI1 WifiResult at time 1 estimated in Room1
-            RSSI1 WifiResult at time 2 estimated in Room1
-            RSSI1 WifiResult at time 3 estimated in Room1
-            ...
-        RSSI2
-            RSSI2 WifiResult at time 1 estimated in Room1
-            ...
-        ...
-    Room2
-        RSSI1
-            RSSI1 WifiResult at time 1 estimated in Room2
-            RSSI1 WifiResult at time 2 estimated in Room2
-            ...
-        RSSI2
-            RSSI2 WifiResult at time 1 estimated in Room2
-            ...
-    ...
-     */
     private TreeMap<String, TreeMap<String, List<WifiResult>>> database;
     private long lastMappedTime;
+    private static String FILE = "/sdcard/rssiDatabase.txt";
 
     public RSSIDatabase() {
         database = new TreeMap<String, TreeMap<String, List<WifiResult>>>();
@@ -59,7 +44,9 @@ public class RSSIDatabase {
     }
 
     public void add(WifiResult wifiResult) {
-        add(wifiResult.getRoom().getName(), wifiResult.getBSSID(), wifiResult);
+        if (wifiResult == null) return;
+
+        add(wifiResult.getRoom(), wifiResult.getBSSID(), wifiResult);
     }
 
     public void add(String room, String mac, WifiResult result) {
@@ -82,12 +69,15 @@ public class RSSIDatabase {
     public void createRSSIdatabase(LocalizationActivity activity, Cloud particleCloud, TreeMap<Long, List<WifiResult>> wifiScanData, TreeMap<Long, Movement> movementData) {
         if (wifiScanData.size() == 0 || movementData.size() == 0) return;
 
-        // where am I now?
-        Point currentPosition = particleCloud.getEstimatedPosition();
-
         Iterator<Long> wifiScanTimes = wifiScanData.descendingKeySet().iterator();
         long scanTime = wifiScanTimes.next();
+        // don't do double work
+        if (scanTime < lastMappedTime) return;
+
         long mappedUntil = scanTime; // saved to use at the end of this method
+
+        // where am I now?
+        Point currentPosition = particleCloud.getEstimatedPosition();
 
         double[] movementBeforeLastScan = new double[]{0,0};
         for (long movementTimestamp : movementData.descendingKeySet()) {
@@ -122,7 +112,7 @@ public class RSSIDatabase {
 
             // we now know where we were supposed to be at each scan time, so add the estimated rooms!
             for (WifiResult scanResult : wifiScanData.get(scanTime)) {
-                scanResult.setRoom(activity.getEstimatedRoom(scanPosition));
+                scanResult.setRoom(activity.getEstimatedRoom(scanPosition).getName());
 
                 // only save to database if useful
                 if (scanResult.hasRoom()) {
@@ -140,7 +130,7 @@ public class RSSIDatabase {
     }
 
     public void writeToSD() {
-        if (database.size() == 0) return;
+        if (database != null && database.size() == 0) return;
 
         String write = "";
         for (TreeMap<String, List<WifiResult>> ssids : database.values()) {
@@ -152,7 +142,7 @@ public class RSSIDatabase {
         }
 
         try {
-            File myFile = new File("/sdcard/rssiDatabase.txt");
+            File myFile = new File(FILE);
             myFile.createNewFile();
             FileOutputStream fOut = new FileOutputStream(myFile);
             OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
@@ -163,6 +153,48 @@ public class RSSIDatabase {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    public static RSSIDatabase loadFromSD() {
+        BufferedReader reader;
+        RSSIDatabase database = new RSSIDatabase();
+
+        try {
+            File myFile = new File(FILE);
+            if (!myFile.exists()) throw new IOException("RSSI database file not found.");
+
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(myFile)));
+
+            String line;
+            WifiResult result;
+            while ((line = reader.readLine()) != null) {
+                StringTokenizer st = new StringTokenizer(line, ",");
+
+                String BSSID = st.nextToken();
+                String SSID = st.nextToken();
+                String level = st.nextToken();
+                String channel = st.nextToken();
+                String timestamp = st.nextToken();
+
+                result = new WifiResult(BSSID, SSID, Integer.parseInt(level), Integer.parseInt(channel), Long.parseLong(timestamp));
+
+                if(st.hasMoreTokens()) {
+                    String room = st.nextToken();
+                    result.setRoom(room);
+                }
+
+                database.add(result);
+            }
+
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+
+        System.out.println("Loaded database from SD: "+database.size()+ " rooms");
+        System.out.println(database);
+
+        return database;
     }
 
     private class Neighbor implements Comparable<Neighbor> {
@@ -235,5 +267,50 @@ public class RSSIDatabase {
         }
 
         return distances.get(0).room;
+    }
+
+    /*
+    Room1
+        RSSI1 (mac address)
+            RSSI1 WifiResult at time 1 estimated in Room1
+            RSSI1 WifiResult at time 2 estimated in Room1
+            RSSI1 WifiResult at time 3 estimated in Room1
+            ...
+        RSSI2
+            RSSI2 WifiResult at time 1 estimated in Room1
+            ...
+        ...
+    Room2
+        RSSI1
+            RSSI1 WifiResult at time 1 estimated in Room2
+            RSSI1 WifiResult at time 2 estimated in Room2
+            ...
+        RSSI2
+            RSSI2 WifiResult at time 1 estimated in Room2
+            ...
+    ...
+     */
+    public String toString() {
+        String result = "";
+
+        for (Map.Entry<String, TreeMap<String, List<WifiResult>>> entry : database.entrySet()) {
+            TreeMap<String, List<WifiResult>> roomInfo = entry.getValue();
+            String room = entry.getKey();
+
+            result += room + "\n";
+
+            for (Map.Entry<String, List<WifiResult>> roomEntry : roomInfo.entrySet()) {
+                List<WifiResult> wifiResults = roomEntry.getValue();
+                String mac = roomEntry.getKey();
+
+                result += "\t" + mac + "\n";
+
+                for (WifiResult wifi : wifiResults) {
+                    result += "\t\t" + wifi + "\n";
+                }
+            }
+        }
+
+        return result;
     }
 }

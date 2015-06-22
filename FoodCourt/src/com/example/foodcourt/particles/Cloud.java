@@ -6,15 +6,17 @@ public class Cloud {
 
     private Point estimatedPosition;
     private List<Particle> particles;
+    private double spread;
 
     public Cloud(List<Particle> particles) {
         this.particles = particles;
-        this.estimatedPosition = Cloud.calculateCenter(particles);
+        this.estimatedPosition = calculateCenter();
     }
 
     public void setParticles(List<Particle> particles) {
         this.particles = particles;
-        this.estimatedPosition = calculateCenter(particles);
+        this.estimatedPosition = calculateCenter();
+        this.spread = calculateSpread();
     }
 
     public int getParticleCount() {
@@ -29,8 +31,15 @@ public class Cloud {
         return particles;
     }
 
+    public double getSpread() {
+        if (spread == 0) {
+            spread = calculateSpread();
+        }
+        return spread;
+    }
+
     // Barycentre of particle cloud
-    public static Point calculateCenter(List<Particle> particles) {
+    private Point calculateCenter() {
         double x = 0;
         double y = 0;
         double sum = 0;
@@ -40,29 +49,20 @@ public class Cloud {
             y += result.getY();
             sum ++;
         }
-        return new Point(x / sum, y / sum);
+
+        estimatedPosition = new Point(x / sum, y / sum);
+        return estimatedPosition;
     }
 
     //Spread of particles
-    public double calculateSpread() {
+    private double calculateSpread() {
         double diff = 0;
 
         for (Particle particle : particles) {
             diff += particle.euclideanDistance(estimatedPosition);
         }
 
-        return diff / particles.size();
-    }
-
-    //Spread of particles
-    public static double calculateSpread(List<Particle> particles) {
-        Point estimatedPosition = calculateCenter(particles);
-        double diff = 0;
-
-        for (Particle particle : particles) {
-            diff += particle.euclideanDistance(estimatedPosition);
-        }
-
-        return diff / particles.size();
+        spread = diff / particles.size();
+        return spread;
     }
 }

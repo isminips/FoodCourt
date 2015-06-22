@@ -21,7 +21,10 @@ import com.example.foodcourt.rssi.RSSIDatabase;
 import com.example.foodcourt.rssi.WifiResult;
 import com.example.foodcourt.rssi.WifiScanReceiver;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +41,7 @@ public class LocalizationActivity extends BaseActivity {
 	private Cloud particleCloud;
 	private Visualisation visualisation;
 	private Compass compass;
+	private String angles = ""; // for debugging purposes
 	private HashMap<String, RoomInfo> roomInfo;
 	double totalArea = 0;
 	private TreeMap<Long, List<WifiResult>> wifiScanData;
@@ -79,6 +83,7 @@ public class LocalizationActivity extends BaseActivity {
 
 		initializeParticleCloud();
 		initializeRSSI();
+		loadRSSIdatabase();
 		initializeSensors();
 	}
 
@@ -107,11 +112,13 @@ public class LocalizationActivity extends BaseActivity {
 		unregisterSensors();
 		unregisterWifiSensors();
 		visualizationUpdater.removeCallbacks(visualizationUpdate);
-		rssiDatabase.writeToSD();
+		saveRSSIdatabase();
 	}
 
 	private void unregisterSensors() {
-		sensors.cancel(false);
+		if (sensors != null) {
+			sensors.cancel(false);
+		}
 	}
 
 	private void unregisterWifiSensors() {
@@ -143,10 +150,34 @@ public class LocalizationActivity extends BaseActivity {
 		movementData = new TreeMap<Long, Movement>();
 
 		updateVisualization();
+
+		saveAngles(); // TODO remove debug
+	}
+
+	/**
+	 * For debugging purposes
+	 */
+	private void saveAngles() {
+		if (angles.length() == 0) return;
+
+		try {
+			File myFile = new File("/sdcard/angles_"+System.currentTimeMillis()+".txt");
+			myFile.createNewFile();
+			FileOutputStream fOut = new FileOutputStream(myFile);
+			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+			myOutWriter.append(angles);
+			myOutWriter.close();
+			fOut.close();
+			toast("Done writing angles to SD");
+			angles = "";
+		} catch (Exception e) {
+			toast(e.getMessage());
+		}
 	}
 
 	public void updateParticleCloud(Movement movement) {
 		log(movement);
+		angles += movement.getAngle() + "\n"; // TODO remove debug
 
 		movementData.put(System.currentTimeMillis(), movement);
 
@@ -171,8 +202,7 @@ public class LocalizationActivity extends BaseActivity {
 
 	// VISUALIZATION
 	private void updateVisualization() {
-		visualisation.setParticles(particleCloud.getParticles());
-		visualisation.setEstimatedPoint(particleCloud.getEstimatedPosition());
+		visualisation.setCloud(particleCloud);
 		visualisation.setEstimatedRoom(getEstimatedRoom(particleCloud.getEstimatedPosition()));
 
 		visualisation.update();
@@ -180,8 +210,9 @@ public class LocalizationActivity extends BaseActivity {
 
 	// RSSI
 	private void initializeRSSI() {
+		unregisterWifiSensors();
 		initializeWifiSensors();
-		resetRSSIdatabase();
+		saveRSSIdatabase();
 		resetRSSImeasurements();
 	}
 
@@ -195,8 +226,25 @@ public class LocalizationActivity extends BaseActivity {
 		wifiManager.startScan();
 	}
 
+	private void createRSSIdatabase() {
+		if (rssiDatabase == null) resetRSSIdatabase();
+
+		rssiDatabase.createRSSIdatabase(this, particleCloud, wifiScanData, movementData);
+	}
+
+	private void loadRSSIdatabase() {
+		rssiDatabase = RSSIDatabase.loadFromSD();
+	}
+
 	private void resetRSSIdatabase() {
 		rssiDatabase = new RSSIDatabase();
+	}
+
+	private void saveRSSIdatabase() {
+		if (particleCloud.getSpread() < CONVERGENCE_SIZE) {
+			createRSSIdatabase();
+			rssiDatabase.writeToSD();
+		}
 	}
 
 	private void resetRSSImeasurements() {
@@ -216,40 +264,38 @@ public class LocalizationActivity extends BaseActivity {
 	public void initializeRSSI(View view) {
 		toast("Initialized RSSI database");
 		initializeRSSI();
+		resetRSSIdatabase();
 	}
 
 	public void senseRSSI(View view) {
-		log("Movement data: " + movementData.size() + " measurements");
-		log("RSSI data: " + wifiScanData.size() + " measurements");
 		visualisation.setEstimatedRoomRSSI(null);
 
+		log("Movement data: " + movementData.size() + " measurements");
+		log("RSSI data: " + wifiScanData.size() + " measurements");
 		// If we don't have RSSI data, what are we doing here?
 		if (wifiScanData.size() == 0) {
 			wifiManager.startScan();
 		}
 
 		// Can we create a database?
-		if (particleCloud.calculateSpread() > CONVERGENCE_SIZE) {
-			log("Particles have not converged yet");
+		if (particleCloud.getSpread() < CONVERGENCE_SIZE) {
+			createRSSIdatabase();
+			log("RSSI database created: Your steps have been traced back to " + rssiDatabase.size() + " rooms");
 		} else {
-			rssiDatabase.createRSSIdatabase(this, particleCloud, wifiScanData, movementData);
+			log("Particles have not converged yet");
 		}
-
-		// log
-		rssiDatabase.createRSSIdatabase(this, particleCloud, wifiScanData, movementData); // TODO remove this line
-		log("RSSI database: " + rssiDatabase.size() + " items");
 
 		if (wifiScanData.size() > 0 && rssiDatabase.size() > 0) {
 			toast("Estimating position based on RSSI...");
 
-			List<WifiResult> lastScan = wifiScanData.pollFirstEntry().getValue();
-			//logCollection(lastScan, "Last scan");
+			List<WifiResult> lastScan = wifiScanData.pollLastEntry().getValue();
 
 			String estimatedRoom = rssiDatabase.determineRoom(lastScan);
+
 			visualisation.setEstimatedRoomRSSI(estimatedRoom);
 			toast("Estimated room: " + estimatedRoom);
 		} else {
-			toast("Could not gather RSSI data");
+			toast("Unable to estimate position based on RSSI");
 		}
 	}
 }

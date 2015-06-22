@@ -35,14 +35,14 @@
             android:layout_weight="1"
             android:layout_height="fill_parent"
             android:onClick="initializePA"
-            android:text="Initial Belief PA" />
+            android:text="Reset Particle Cloud" />
         <Button
             android:id="@+id/initial_rssi"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="fill_parent"
             android:onClick="initializeRSSI"
-            android:text="Initial Belief RSSI" />
+            android:text="Reset RSSI database" />
         <Button
             android:id="@+id/sense_rssi"
             android:layout_width="0dp"

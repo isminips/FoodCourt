@@ -6,8 +6,6 @@ import android.content.DialogInterface;
 import android.view.View;
 import android.widget.Toast;
 
-import java.util.Collection;
-
 public class BaseActivity extends Activity {
 
 	private Toast t;
