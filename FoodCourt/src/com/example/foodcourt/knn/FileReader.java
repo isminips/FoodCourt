@@ -41,10 +41,16 @@ public class FileReader {
 				}
 
 				String label = st.nextToken();
+				String x= st.nextToken();
+				String y=st.nextToken();
+				String z=st.nextToken();
 				String magnitude = st.nextToken();
 				String time = st.nextToken();
 
 				attributes.add(new Label(Label.determineActivity(label)));
+				attributes.add(new X(Double.parseDouble(x)));
+				attributes.add(new Y(Double.parseDouble(y)));
+				attributes.add(new Z(Double.parseDouble(z)));
 				attributes.add(new Magnitude(Double.parseDouble(magnitude)));
 				attributes.add(new Time(Float.parseFloat(time)));
 

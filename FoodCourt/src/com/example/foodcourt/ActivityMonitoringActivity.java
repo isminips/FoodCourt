@@ -31,6 +31,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
 	private String data;
+	private String saving_data="";
 	private float starttime;
 	private ActivityList activityList;
 	private Label.Activities trainingStatus = Label.Activities.Standing;
@@ -51,7 +52,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
         }
 
 		try {
-            trainingSet = loadTrainingSet("trainingSet.csv");
+            trainingSet = loadTrainingSet("trainingSet7.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -107,7 +108,9 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		time = Math.round((now - starttime) / 1000000);
 
 		double magnitude = Math.sqrt(x * x + y * y + z * z);
-		data += trainingStatus.toString() + "," + magnitude + "," + time + "\n";
+		data += trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
+		saving_data +=trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
+		log("acc data:" +trainingStatus.toString()+","+ x +","+ y +","+ z +","+ magnitude +"," + time + "\n");
 
 		if (time > TIER_1_SAMPLING_TIME) {
 			tier1.add(classify());
@@ -225,11 +228,11 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	// CREATE TRAINING DATA
 	public void save(View view) {
 		try {
-			File myFile = new File("/sdcard/mysdfile.txt");
+			File myFile = new File("/sdcard/acceleration.txt");
 			myFile.createNewFile();
 			FileOutputStream fOut = new FileOutputStream(myFile);
 			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-			myOutWriter.append(data);
+			myOutWriter.append(saving_data);
 			myOutWriter.close();
 			fOut.close();
 			toast("Done writing file in SD");
@@ -244,7 +247,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		if (trainingStatus == Label.Activities.Standing) {
 			trainingStatus = Label.Activities.Walking;
 		} else {
-			trainingStatus = Label.Activities.Walking;
+			trainingStatus = Label.Activities.Standing;
 		}
 
 		Button p1_button = (Button) findViewById(R.id.change);

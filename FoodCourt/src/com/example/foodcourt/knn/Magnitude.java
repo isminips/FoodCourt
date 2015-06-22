@@ -21,4 +21,8 @@ public class Magnitude extends Feature {
 		return magnitude;
 	}
 
+	public double getMagnitudeDiffFromMean() {
+		return Math.abs(magnitude - 9.8);
+	}
+
 }

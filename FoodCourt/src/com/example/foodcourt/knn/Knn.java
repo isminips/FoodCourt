@@ -6,14 +6,18 @@ import java.util.Date;
 import java.util.Random;
 
 public class Knn {
-	public static final int NUM_ATTRS = 3;
+	public static final int NUM_ATTRS = 6;
 	public static final int K = 5;
 
 	public static final int LABEL_INDEX = 0;
-	public static final int MAGNITUDE_INDEX = 1;
-	public static final int TIME_INDEX = 2;
+	public static final int X_INDEX = 1;
+	public static final int Y_INDEX = 2;
+	public static final int Z_INDEX = 3;
+	public static final int MAGNITUDE_INDEX = 4;
+	public static final int TIME_INDEX = 5;
 	public static final int NUM_RUNS = 1;
 	public static double averageDistance = 0;
+
 
 	public static Instance extractIndividualInstance(
 			ArrayList<Instance> instances) {
@@ -34,7 +38,16 @@ public class Knn {
 				System.out.println(((Label) f).getLabel().toString());
 			} else if (f instanceof Magnitude) {
 				System.out.println(((Magnitude) f).getMagnitude());
-			} else if (f instanceof Time) {
+			}
+			else if (f instanceof X) {
+				System.out.println(((X) f).getX());
+			}
+			else if (f instanceof Y) {
+				System.out.println(((Y) f).getY());
+			}
+			else if (f instanceof Z) {
+				System.out.println(((Z) f).getZ());
+			}else if (f instanceof Time) {
 				System.out.println(((Time) f).getTime());
 			}
 		}
@@ -70,10 +83,19 @@ public class Knn {
 			Instance instance = neighbor.getInstance();
 			if (instance.getLabel() == Label.Activities.Walking) {
 				walking++;
+
 			} else {
 				standing++;
 			}
+
+
+
+
 		}
+
+
+
+
 
 		if (walking > standing) {
 			return Label.Activities.Walking;
@@ -116,6 +138,7 @@ public class Knn {
 
 		for (int i = 0; i < K; i++) {
 			averageDistance += distances.get(i).getDistance();
+
 			neighbors.add(distances.get(i));
 		}
 
@@ -127,6 +150,8 @@ public class Knn {
 		ArrayList<Neighbor> distances = new ArrayList<Neighbor>();
 		Neighbor neighbor = null;
 		int distance = 0;
+		double maxY=0;
+		double minY=0;
 
 		for (int i = 0; i < instances.size(); i++) {
 			Instance instance = instances.get(i);
@@ -139,10 +164,34 @@ public class Knn {
 					double magnitude = ((Magnitude) f).getMagnitude();
 					Magnitude singleInstanceMagnitude = (Magnitude) singleInstance
 							.getAttributes().get(MAGNITUDE_INDEX);
-					distance += Math
-							.pow((magnitude - singleInstanceMagnitude
-									.getMagnitude()), 2);
-				} else if (f instanceof Time) {
+					//distance += Math.pow((magnitude - singleInstanceMagnitude.getMagnitude()), 2);
+					distance += Math.pow(((((Magnitude) f).getMagnitudeDiffFromMean() - singleInstanceMagnitude.getMagnitudeDiffFromMean())), 2);
+				}
+				else if (f instanceof X) {
+					double x= ((X) f).getX();
+					X singleInstanceX = (X) singleInstance
+							.getAttributes().get(X_INDEX);
+
+					distance += Math.pow((x - singleInstanceX.getX()), 2);
+
+				}
+				else if (f instanceof Y) {
+					double y= ((Y) f).getY();
+					Y singleInstanceY = (Y) singleInstance
+							.getAttributes().get(Y_INDEX);
+
+
+					distance += Math.pow((y - singleInstanceY.getY()), 2);
+
+				}
+				else if (f instanceof Z) {
+					double z= ((Z) f).getZ();
+					Z singleInstanceZ = (Z) singleInstance
+							.getAttributes().get(Z_INDEX);
+					distance += Math.pow((z - singleInstanceZ.getZ()), 2);
+				}
+
+				else if (f instanceof Time) {
 					// Do nothing!
 				} else if (f instanceof Label) {
 					// Do nothing!
