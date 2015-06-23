@@ -63,7 +63,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
         InputStream trainStream = getAssets().open(filename);
         FileReader trainReader = new FileReader(trainStream);
-        return trainReader.buildInstances();
+        return trainReader.buildInstances(40);
     }
 
     public void initializeViews() {

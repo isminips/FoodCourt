@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 public class FileReader {
@@ -16,6 +17,10 @@ public class FileReader {
 	}
 
 	public ArrayList<Instance> buildInstances() {
+		return buildInstances(0);
+	}
+
+	public ArrayList<Instance> buildInstances(int skipPercentage) {
 		BufferedReader reader = null;
 		DataInputStream dis = null;
 		ArrayList<Instance> instances = new ArrayList<Instance>();
@@ -29,7 +34,10 @@ public class FileReader {
 			int numa = 1;
 			Instance instance = null;
 			ArrayList<Feature> attributes;
+			Random random = new Random();
 			while ((line = reader.readLine()) != null) {
+				if (random.nextInt(100) < skipPercentage) continue;
+
 				StringTokenizer st = new StringTokenizer(line, ",");
 				attributes = new ArrayList<Feature>();
 				instance = new Instance();
