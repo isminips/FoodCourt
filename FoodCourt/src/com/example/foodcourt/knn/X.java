@@ -13,12 +13,15 @@ public class X extends Feature {
 		this.x = x;
 	}
 	
-	public void setX(double x) {
-		this.x = x;
+	public void setValue(double value) {
+		this.x = value;
 	}
 
-	public double getX() {
+	public double getValue() {
 		return x;
 	}
 
+	public String toString() {
+		return x + "";
+	}
 }

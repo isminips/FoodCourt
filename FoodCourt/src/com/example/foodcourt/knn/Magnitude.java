@@ -13,11 +13,11 @@ public class Magnitude extends Feature {
 		this.magnitude = magnitude;
 	}
 	
-	public void setMagnitude(double magnitude) {
+	public void setValue(double magnitude) {
 		this.magnitude = magnitude;
 	}
 
-	public double getMagnitude() {
+	public double getValue() {
 		return magnitude;
 	}
 
@@ -25,4 +25,7 @@ public class Magnitude extends Feature {
 		return Math.abs(magnitude - 9.8);
 	}
 
+	public String toString() {
+		return magnitude + "";
+	}
 }

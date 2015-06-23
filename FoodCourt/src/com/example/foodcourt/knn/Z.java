@@ -13,12 +13,15 @@ public class Z extends Feature {
 		this.z = z;
 	}
 	
-	public void setZ(double z) {
+	public void setValue(double z) {
 		this.z = z;
 	}
 
-	public double getZ() {
+	public double getValue() {
 		return z;
 	}
 
+	public String toString() {
+		return z + "";
+	}
 }

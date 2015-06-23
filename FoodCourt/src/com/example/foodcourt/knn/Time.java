@@ -13,12 +13,15 @@ public class Time extends Feature {
 		this.time = time;
 	}
 
-	public void setTime(float time) {
+	public void setValue(float time) {
 		this.time = time;
 	}
 
-	public float getTime() {
+	public float getValue() {
 		return time;
 	}
 
+	public String toString() {
+		return time + "";
+	}
 }

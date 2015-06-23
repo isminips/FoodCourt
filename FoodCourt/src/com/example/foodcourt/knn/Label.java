@@ -18,11 +18,11 @@ public class Label extends Feature {
 		this.label = label;
 	}
 
-	public void setLabel(Activities label) {
+	public void setValue(Activities label) {
 		this.label = label;
 	}
 
-	public Activities getLabel() {
+	public Activities getValue() {
 		return label;
 	}
 	
@@ -34,6 +34,10 @@ public class Label extends Feature {
 			return Activities.Walking;
 		}
 		return null;
+	}
+
+	public String toString() {
+		return label.toString();
 	}
 
 }

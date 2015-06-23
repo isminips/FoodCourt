@@ -15,6 +15,10 @@ import com.example.foodcourt.knn.FileReader;
 import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.knn.Knn;
 import com.example.foodcourt.knn.Label;
+import com.example.foodcourt.knn.Magnitude;
+import com.example.foodcourt.knn.X;
+import com.example.foodcourt.knn.Y;
+import com.example.foodcourt.knn.Z;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,15 +29,14 @@ import java.util.ArrayList;
 
 public class ActivityMonitoringActivity extends BaseActivity implements SensorEventListener {
 
-    private final int TIER_1_SAMPLING_TIME = 1000;
-    private final int TIER_2_SAMPLING_TIME = 2;
+    public static final int TIER_1_SAMPLING = 10;
+    public static final int TIER_2_SAMPLING = 2;
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
-	private String data;
+	private ArrayList<Instance> data;
 	private String saving_data="";
 	private float starttime;
-	private float classifytime;
 	private ActivityList activityList;
 	private Label.Activities trainingStatus = Label.Activities.Standing;
     ArrayList<Instance> trainingSet = null;
@@ -73,9 +76,8 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	private void reset() {
-		data = "";
+		data = new ArrayList<Instance>();
 		starttime = 0;
-		classifytime = 0;
 		activityList = new ActivityList();
 		tier1 = new ArrayList<Label.Activities>();
 		tier2 = new ArrayList<Label.Activities>();
@@ -111,14 +113,18 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 
 		double magnitude = Math.sqrt(x * x + y * y + z * z);
 		double smooth = Math.sqrt(x * x + y * y + z * z);
-		data += trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
-		saving_data +=trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
-		log("acc data:" +trainingStatus.toString()+","+ x +","+ y +","+ z +","+ magnitude +"," + time + "\n");
 
-		if (time - classifytime > TIER_1_SAMPLING_TIME) {
-			classifytime = time;
+		// Abuse Instance class for easier printing
+		Instance instance = new Instance();
+		instance.createAttributes(trainingStatus.toString(), x, y, z, magnitude, time + "");
+
+		data.add(instance);
+		saving_data += instance + "\n";
+		log("Acc data ["+data.size()+"]:" + instance);
+
+		if (data.size() >= TIER_1_SAMPLING) {
 			tier1.add(classify());
-			data = "";
+			data.clear();
 		}
 	}
 
@@ -182,10 +188,31 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 
 	// CLASSIFICATION
 	public Label.Activities classify() {
-		Label.Activities currentActivity = Knn.classify(data, trainingSet);
+		Instance classificationInstance = new Instance();
+
+		double ax = 0;
+		double ay = 0;
+		double az = 0;
+		double amag = 0;
+
+		for (Instance line : data) {
+			X x = (X) line.getAttributes().get(Knn.X_INDEX);
+			ax += x.getValue();
+			Y y = (Y) line.getAttributes().get(Knn.Y_INDEX);
+			ay += y.getValue();
+			Z z = (Z) line.getAttributes().get(Knn.Z_INDEX);
+			az += z.getValue();
+			Magnitude magnitude = (Magnitude) line.getAttributes().get(Knn.MAGNITUDE_INDEX);
+			amag += magnitude.getValue();
+		}
+
+		int count = data.size();
+		classificationInstance.createAttributes(trainingStatus.toString(), ax/count, ay/count, az/count, amag/count, "0");
+
+		Label.Activities currentActivity = Knn.classify(classificationInstance, trainingSet);
 		currentActivityLabel.setText(currentActivity.toString());
 
-		log("Current activity: " + currentActivity.toString());
+		log("Current activity: " + currentActivity.toString() + " - instance: " + classificationInstance);
 
 		return currentActivity;
 	}
@@ -208,7 +235,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 					break;
 				default: throw new IllegalArgumentException("UNKNOWN classification");
 			}
-			if (processing >= TIER_2_SAMPLING_TIME) {
+			if (processing >= TIER_2_SAMPLING) {
 				Label.Activities tier2Activity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
 				tier2.add(tier2Activity);
 				processing = 0; walking = 0; standing = 0;
@@ -238,7 +265,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 			myOutWriter.close();
 			fOut.close();
 			toast("Done writing file in SD");
-			log(data);
+			log(saving_data);
 		} catch (Exception e) {
 			toast(e.getMessage());
 		}

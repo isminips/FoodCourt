@@ -13,11 +13,11 @@ public class Envelope extends Feature {
 		this.envelope = envelope;
 	}
 	
-	public void setEnvelope(double envelope) {
+	public void setValue(double envelope) {
 		this.envelope = envelope;
 	}
 
-	public double getEnvelope() {
+	public double getValue() {
 		return envelope;
 	}
 
@@ -25,4 +25,7 @@ public class Envelope extends Feature {
 		return Math.abs(envelope - 9.8);
 	}
 
+	public String toString() {
+		return envelope + "";
+	}
 }
