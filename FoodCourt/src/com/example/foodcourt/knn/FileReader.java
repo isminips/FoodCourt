@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.StringTokenizer;
 
 public class FileReader {
@@ -17,56 +16,69 @@ public class FileReader {
 	}
 
 	public ArrayList<Instance> buildInstances() {
-		return buildInstances(0);
-	}
-
-	public ArrayList<Instance> buildInstances(int skipPercentage) {
 		BufferedReader reader = null;
 		DataInputStream dis = null;
 		ArrayList<Instance> instances = new ArrayList<Instance>();
 
 		try {
 			reader = new BufferedReader(new InputStreamReader(stream));
-			;
+
+
 
 			// read the first Instance of the file
 			String line;
 			int numa = 1;
 			Instance instance = null;
 			ArrayList<Feature> attributes;
-			Random random = new Random();
+
 			while ((line = reader.readLine()) != null) {
-				if (random.nextInt(100) < skipPercentage) continue;
-
-				StringTokenizer st = new StringTokenizer(line, ",");
-				attributes = new ArrayList<Feature>();
 				instance = new Instance();
+				double ax = 0;
+				double ay = 0;
+				double az = 0;
+				double amag = 0;
+				attributes = new ArrayList<Feature>();
+				String label = null;
+				String time = null;
+				for (int l = 0; l <= 10; l++) {
+					line = reader.readLine();
+					StringTokenizer st = new StringTokenizer(line, ",");
 
-				numa++;
-				if (Knn.NUM_ATTRS != st.countTokens()) {
-					System.out.println("LINE: " + numa--);
-					throw new Exception("Unknown number of attributes!");
+
+					numa++;
+					if (Knn.NUM_ATTRS != st.countTokens()) {
+						System.out.println("LINE: " + numa--);
+						throw new Exception("Unknown number of attributes!");
+					}
+
+					label = st.nextToken();
+					String x = st.nextToken();
+					String y = st.nextToken();
+					String z = st.nextToken();
+					String magnitude = st.nextToken();
+					time = st.nextToken();
+
+
+					ax += Double.parseDouble(x) / l;
+					ay += Double.parseDouble(y) / l;
+					az += Double.parseDouble(z) / l;
+					amag += Double.parseDouble(magnitude) / l;
+					attributes.add(new Label(Label.determineActivity(label)));
+					attributes.add(new X(ax));
+					attributes.add(new Y(ay));
+					attributes.add(new Z(az));
+					attributes.add(new Magnitude(amag));
+					attributes.add(new Time(Float.parseFloat(time)));
+
+
 				}
-
-				String label = st.nextToken();
-				String x= st.nextToken();
-				String y=st.nextToken();
-				String z=st.nextToken();
-				String magnitude = st.nextToken();
-				String time = st.nextToken();
-
-				attributes.add(new Label(Label.determineActivity(label)));
-				attributes.add(new X(Double.parseDouble(x)));
-				attributes.add(new Y(Double.parseDouble(y)));
-				attributes.add(new Z(Double.parseDouble(z)));
-				attributes.add(new Magnitude(Double.parseDouble(magnitude)));
-				attributes.add(new Time(Float.parseFloat(time)));
-
 				Label labelObj = (Label) attributes.get(Knn.LABEL_INDEX);
 				instance.setLabel(labelObj.getLabel());
 
 				instance.setAttributes(attributes);
 				instances.add(instance);
+
+
 			}
 
 		} catch (IOException e) {

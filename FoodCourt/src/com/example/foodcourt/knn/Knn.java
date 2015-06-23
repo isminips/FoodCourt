@@ -14,6 +14,7 @@ public class Knn {
 	public static final int Y_INDEX = 2;
 	public static final int Z_INDEX = 3;
 	public static final int MAGNITUDE_INDEX = 4;
+	//public static final int ENVELOPE_INDEX = 5;
 	public static final int TIME_INDEX = 5;
 	public static final int NUM_RUNS = 1;
 	public static double averageDistance = 0;
@@ -150,8 +151,8 @@ public class Knn {
 		ArrayList<Neighbor> distances = new ArrayList<Neighbor>();
 		Neighbor neighbor = null;
 		int distance = 0;
-		double maxY=0;
-		double minY=0;
+		double maxM=9.8;
+		double minM=9.8;
 
 		for (int i = 0; i < instances.size(); i++) {
 			Instance instance = instances.get(i);
@@ -162,33 +163,47 @@ public class Knn {
 			for (Feature f : instance.getAttributes()) {
 				if (f instanceof Magnitude) {
 					double magnitude = ((Magnitude) f).getMagnitude();
-					Magnitude singleInstanceMagnitude = (Magnitude) singleInstance
-							.getAttributes().get(MAGNITUDE_INDEX);
+					Magnitude singleInstanceMagnitude = (Magnitude) singleInstance.getAttributes().get(MAGNITUDE_INDEX);
 					//distance += Math.pow((magnitude - singleInstanceMagnitude.getMagnitude()), 2);
 					distance += Math.pow(((((Magnitude) f).getMagnitudeDiffFromMean() - singleInstanceMagnitude.getMagnitudeDiffFromMean())), 2);
+
 				}
+
 				else if (f instanceof X) {
 					double x= ((X) f).getX();
 					X singleInstanceX = (X) singleInstance
 							.getAttributes().get(X_INDEX);
-
-					distance += Math.pow((x - singleInstanceX.getX()), 2);
-
+//					if (singleInstanceX.getX() >= maxX){
+//						maxX=singleInstanceX.getX();
+//						System.out.print("maxX is" +maxX);
+//					}
+//					if (singleInstanceX.getX() < minX){
+//						minX=singleInstanceX.getX();
+//						System.out.print("minX is" +maxX);
+//					}
+					//distance += Math.pow((x - singleInstanceX.getX()), 2);
+//					distance += Math.abs(maxX - minX);
 				}
 				else if (f instanceof Y) {
 					double y= ((Y) f).getY();
 					Y singleInstanceY = (Y) singleInstance
 							.getAttributes().get(Y_INDEX);
-
-
-					distance += Math.pow((y - singleInstanceY.getY()), 2);
-
+//					if (singleInstanceY.getY() >= maxY){
+//						maxY=singleInstanceY.getY();
+//						System.out.print("maxX is" +maxY);
+//					}
+//					if (singleInstanceY.getY() < minY){
+//						minY=singleInstanceY.getY();
+//						System.out.print("minX is" +minY);
+//					}
+				//distance += Math.pow((y - singleInstanceY.getY()), 2);
+//					distance += Math.abs(maxY - minY);
 				}
 				else if (f instanceof Z) {
 					double z= ((Z) f).getZ();
 					Z singleInstanceZ = (Z) singleInstance
 							.getAttributes().get(Z_INDEX);
-					distance += Math.pow((z - singleInstanceZ.getZ()), 2);
+					//distance += Math.pow((z - singleInstanceZ.getZ()), 2);
 				}
 
 				else if (f instanceof Time) {

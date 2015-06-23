@@ -33,6 +33,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private String data;
 	private String saving_data="";
 	private float starttime;
+	private float classifytime;
 	private ActivityList activityList;
 	private Label.Activities trainingStatus = Label.Activities.Standing;
     ArrayList<Instance> trainingSet = null;
@@ -52,7 +53,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
         }
 
 		try {
-            trainingSet = loadTrainingSet("trainingSet7.csv");
+            trainingSet = loadTrainingSet("trainingSet8.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -63,7 +64,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
         InputStream trainStream = getAssets().open(filename);
         FileReader trainReader = new FileReader(trainStream);
-        return trainReader.buildInstances(40);
+        return trainReader.buildInstances();
     }
 
     public void initializeViews() {
@@ -74,6 +75,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private void reset() {
 		data = "";
 		starttime = 0;
+		classifytime = 0;
 		activityList = new ActivityList();
 		tier1 = new ArrayList<Label.Activities>();
 		tier2 = new ArrayList<Label.Activities>();
@@ -108,11 +110,13 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		time = Math.round((now - starttime) / 1000000);
 
 		double magnitude = Math.sqrt(x * x + y * y + z * z);
+		double smooth = Math.sqrt(x * x + y * y + z * z);
 		data += trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
 		saving_data +=trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
 		log("acc data:" +trainingStatus.toString()+","+ x +","+ y +","+ z +","+ magnitude +"," + time + "\n");
 
-		if (time > TIER_1_SAMPLING_TIME) {
+		if (time - classifytime > TIER_1_SAMPLING_TIME) {
+			classifytime = time;
 			tier1.add(classify());
 			data = "";
 		}
@@ -178,8 +182,6 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 
 	// CLASSIFICATION
 	public Label.Activities classify() {
-		starttime = 0;
-
 		Label.Activities currentActivity = Knn.classify(data, trainingSet);
 		currentActivityLabel.setText(currentActivity.toString());
 
