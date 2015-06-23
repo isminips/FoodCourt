@@ -29,7 +29,8 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     private int mGeomagnetic_size = 0;
     private float[] mGravity = null;
 
-    public static final Double BUILDING_ORIENTATION = -113.7;
+    public static final Double BUILDING_ORIENTATION = -157.0;
+    public double previousAngle = 0;
 
     private long measureStart = System.currentTimeMillis();
     private String movementData = "";
@@ -159,7 +160,7 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
                         // Add direction to movement
                         double[] movement = new double[]{
                                 stepSize * Math.cos(Math.toRadians(deviceOrientationDegrees)),
-                                stepSize * -Math.sin(Math.toRadians(deviceOrientationDegrees))
+                                stepSize * Math.sin(Math.toRadians(deviceOrientationDegrees))
                         };
 
                         publishProgress(new Movement(movement, deviceOrientationDegrees, elapsedMs));

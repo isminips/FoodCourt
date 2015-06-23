@@ -35,17 +35,17 @@ public class Compass extends View {
 
         float centerx = getWidth()/2;
         float centery = getHeight()/2;
-        canvas.rotate((float) -(compassAngle), centerx, centery);
+        canvas.rotate((float) (compassAngle), centerx, centery);
         canvas.drawLine(centerx-100, centery, centerx+100, centery, compassPaint);
         canvas.drawLine(centerx+98, centery+2, centerx+70, centery-30, compassPaint);
         canvas.drawLine(centerx+98, centery-2, centerx+70, centery+30, compassPaint);
 
         /*  COMPASS
-                90
+               270
 
           180        0
 
-               270
+               90
          */
     }
 
