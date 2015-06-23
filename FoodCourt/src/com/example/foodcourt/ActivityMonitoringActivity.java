@@ -16,6 +16,7 @@ import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.knn.Knn;
 import com.example.foodcourt.knn.Label;
 import com.example.foodcourt.knn.Magnitude;
+import com.example.foodcourt.knn.Measurement;
 import com.example.foodcourt.knn.X;
 import com.example.foodcourt.knn.Y;
 import com.example.foodcourt.knn.Z;
@@ -34,7 +35,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
-	private ArrayList<Instance> data;
+	private ArrayList<Measurement> data;
 	private String saving_data="";
 	private float starttime;
 	private ActivityList activityList;
@@ -76,7 +77,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	private void reset() {
-		data = new ArrayList<Instance>();
+		data = new ArrayList<Measurement>();
 		starttime = 0;
 		activityList = new ActivityList();
 		tier1 = new ArrayList<Label.Activities>();
@@ -111,16 +112,10 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		now = event.timestamp;
 		time = Math.round((now - starttime) / 1000000);
 
-		double magnitude = Math.sqrt(x * x + y * y + z * z);
-		double smooth = Math.sqrt(x * x + y * y + z * z);
+		Measurement measurement = new Measurement(x, y, z, time);
 
-		// Abuse Instance class for easier printing
-		Instance instance = new Instance();
-		instance.createAttributes(trainingStatus.toString(), x, y, z, magnitude, time + "");
-
-		data.add(instance);
-		saving_data += instance + "\n";
-		log("Acc data ["+data.size()+"]:" + instance);
+		data.add(measurement);
+		log("Acc data ["+data.size()+"]:" + measurement);
 
 		if (data.size() >= TIER_1_SAMPLING) {
 			tier1.add(classify());
@@ -194,20 +189,26 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		double ay = 0;
 		double az = 0;
 		double amag = 0;
+		float time = 0;
 
-		for (Instance line : data) {
-			X x = (X) line.getAttributes().get(Knn.X_INDEX);
-			ax += x.getValue();
-			Y y = (Y) line.getAttributes().get(Knn.Y_INDEX);
-			ay += y.getValue();
-			Z z = (Z) line.getAttributes().get(Knn.Z_INDEX);
-			az += z.getValue();
-			Magnitude magnitude = (Magnitude) line.getAttributes().get(Knn.MAGNITUDE_INDEX);
-			amag += magnitude.getValue();
+		for (Measurement line : data) {
+			ax += line.getX();
+			ay += line.getY();
+			az += line.getZ();
+
+			amag += line.getMagnitude();
+
+			time = line.getTime();
 		}
 
+		// HERE WE SHOULD CREATE FEATURES
+		// like mean magnitude, std magnitude, mean x, mean y.. etc
+		// these should replace the current Feature classes like Magnitude, X, Y, Z etc..
+
 		int count = data.size();
-		classificationInstance.createAttributes(trainingStatus.toString(), ax/count, ay/count, az/count, amag/count, "0");
+		classificationInstance.createAttributes(trainingStatus.toString(), ax/count, ay/count, az/count, amag/count, time+"");
+
+		saving_data += classificationInstance + "\n";
 
 		Label.Activities currentActivity = Knn.classify(classificationInstance, trainingSet);
 		currentActivityLabel.setText(currentActivity.toString());
