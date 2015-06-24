@@ -1,5 +1,7 @@
 package com.example.foodcourt.knn;
 
+import com.example.foodcourt.activity.Measurement;
+
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 
@@ -8,6 +10,37 @@ public class Knn {
 	public static final int K = 5;
 
 	public static double averageDistance = 0;
+
+	public static Instance createInstanceFromMeasurements(ArrayList<Measurement> measurements, String trainingStatus) {
+		int count = measurements.size();
+
+		double sumMagnitude = 0;
+		double maxMagnitude = 0;
+		float time = 0;
+
+		for (Measurement line : measurements) {
+			sumMagnitude += line.getMagnitude();
+
+			if (line.getMagnitude() > maxMagnitude) {
+				maxMagnitude = line.getMagnitude();
+			}
+
+			time = line.getTime();
+		}
+
+		double meanMagnitude = sumMagnitude / count;
+
+		double varianceMagnitude = 0;
+		for (Measurement line : measurements) {
+			varianceMagnitude += Math.pow(line.getMagnitude() - meanMagnitude, 2);
+		}
+		varianceMagnitude /= count;
+
+		// HERE WE SHOULD CREATE FEATURES
+		// like mean magnitude, std magnitude, mean x, mean y.. etc
+
+		return new Instance(trainingStatus, meanMagnitude, maxMagnitude, varianceMagnitude, time);
+	}
 
 	public static Instance.Activities determineMajority(ArrayList<Neighbor> neighbors) {
 		int walking = 0, standing = 0;

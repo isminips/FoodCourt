@@ -87,6 +87,24 @@ public class LocalizationActivity extends BaseActivity {
 		initializeSensors();
 	}
 
+	/*protected void onResume() {
+		super.onResume();
+		initializeSensors();
+		initializeWifiSensors();
+	}
+
+	protected void onPause() {
+		super.onPause();
+		unregisterSensors();
+		unregisterWifiSensors();
+	}*/
+
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		stop();
+	}
+
 	private void initializeSensors() {
 		sensors = new Sensors(this);
 		sensors.execute();
@@ -102,12 +120,6 @@ public class LocalizationActivity extends BaseActivity {
 		wifiManager.startScan();
 	}
 
-	@Override
-	public void onBackPressed() {
-		super.onBackPressed();
-		stop();
-	}
-
 	private void stop() {
 		unregisterSensors();
 		unregisterWifiSensors();
@@ -117,7 +129,7 @@ public class LocalizationActivity extends BaseActivity {
 
 	private void unregisterSensors() {
 		if (sensors != null) {
-			sensors.cancel(false);
+			sensors.cancel(true);
 		}
 	}
 

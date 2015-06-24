@@ -7,7 +7,9 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 
+import com.example.foodcourt.ActivityMonitoringActivity;
 import com.example.foodcourt.LocalizationActivity;
+import com.example.foodcourt.activity.Measurement;
 import com.example.foodcourt.knn.FileReader;
 import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.knn.Knn;
@@ -29,10 +31,10 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     private float[] mGravity = null;
 
     public static final Double BUILDING_ORIENTATION = -157.0;
-    public double previousAngle = 0;
+    public static final Double DEVICE_ORIENTATION = -90.0;
 
     private long measureStart = System.currentTimeMillis();
-    private String movementData = "";
+    private ArrayList<Measurement> movementData = new ArrayList<Measurement>();
     private ArrayList<Instance> trainingSet;
 
     public Sensors(LocalizationActivity activity) {
@@ -44,7 +46,7 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
         initializeSensors();
 
         while (!isCancelled()) {
-            if (countLines(movementData) > 10)
+            if (movementData.size() >= ActivityMonitoringActivity.TIER_1_SAMPLING)
                 processSensorValues();
         }
 
@@ -59,18 +61,6 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     @Override
     protected void onProgressUpdate(Movement... movements) {
         activity.updateParticleCloud(movements[0]);
-    }
-
-    private int countLines(String str) {
-        if(str == null || str.isEmpty()) {
-            return 0;
-        }
-        int lines = 1;
-        int pos = 0;
-        while ((pos = str.indexOf("\n", pos) + 1) != 0) {
-            lines++;
-        }
-        return lines;
     }
 
     private void initializeSensors() {
@@ -90,7 +80,7 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
 
             // Load KNN training set
             try {
-                InputStream trainStream = activity.getAssets().open("trainingSet.csv");
+                InputStream trainStream = activity.getAssets().open("dummySet.csv");
                 FileReader trainReader = new FileReader(trainStream);
                 trainingSet = trainReader.buildInstances();
             } catch (IOException e) {
@@ -104,9 +94,11 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     private void unregisterSensors() {
         if (accelerometer != null) {
             sensorManager.unregisterListener(this, accelerometer);
+            accelerometer = null;
         }
         if (magnetometer != null) {
             sensorManager.unregisterListener(this, magnetometer);
+            magnetometer = null;
         }
     }
 
@@ -117,7 +109,7 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     private boolean processSensorValues() {
         boolean success = false;
 
-        if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.length() != 0) {
+        if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.size() > 0) {
             float R[] = new float[9];
             float I[] = new float[9];
 
@@ -137,21 +129,19 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
                 double azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll (in radians)
 
                 if (trainingSet != null) {
-                    Instance.Activities activity = Knn.classify(movementData, trainingSet);
+                    Instance instance = Knn.createInstanceFromMeasurements(movementData, "Undefined");
+                    Instance.Activities activity = Knn.classify(instance, trainingSet);
 
                     if (activity == Instance.Activities.Walking) {
                         // TODO create proper angle
-                        double deviceOrientationDegrees = Math.toDegrees(azimuth) + BUILDING_ORIENTATION;
+                        double deviceOrientationDegrees = Math.toDegrees(azimuth) + BUILDING_ORIENTATION + DEVICE_ORIENTATION;
                         deviceOrientationDegrees = deviceOrientationDegrees >= 0 ? deviceOrientationDegrees : deviceOrientationDegrees + 360;
 
                         // TODO determine best speed
                         double speed = 1; // speed in m/s
 
                         // Get elapsed time
-                        String[] lines = movementData.split("\n");
-                        String[] firstLine = lines[0].split(",");
-                        String[] lastLine = lines[lines.length-1].split(",");
-                        int elapsedMs = (int) (Double.parseDouble(lastLine[lastLine.length - 1]) - Double.parseDouble(firstLine[firstLine.length - 1]));
+                        int elapsedMs = (int) (movementData.get(movementData.size()-1).getTime() - movementData.get(0).getTime());
 
                         // Calculate step size
                         double stepSize = speed * elapsedMs/1000;
@@ -167,7 +157,7 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
                 }
             }
 
-            movementData = "";
+            movementData.clear();
             measureStart = System.currentTimeMillis();
         }
 
@@ -192,8 +182,10 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
             float z = event.values[2];
             float time = System.currentTimeMillis() - measureStart;
 
-            double magnitude = Math.sqrt(x * x + y * y + z * z);
-            movementData += "Undetermined," + magnitude + "," + time + "\n";
+            Measurement measurement = new Measurement(x, y, z, time);
+
+            movementData.add(measurement);
+            //System.out.println("Acc data [" + movementData.size() + "]:" + measurement);
         }
     }
 

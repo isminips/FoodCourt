@@ -4,6 +4,7 @@ import com.example.foodcourt.LocalizationActivity;
 import com.example.foodcourt.particles.Cloud;
 import com.example.foodcourt.particles.Movement;
 import com.example.foodcourt.particles.Point;
+import com.example.foodcourt.particles.RoomInfo;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -112,7 +113,11 @@ public class RSSIDatabase {
 
             // we now know where we were supposed to be at each scan time, so add the estimated rooms!
             for (WifiResult scanResult : wifiScanData.get(scanTime)) {
-                scanResult.setRoom(activity.getEstimatedRoom(scanPosition).getName());
+                RoomInfo estimatedRoom = activity.getEstimatedRoom(scanPosition);
+
+                if (estimatedRoom != null) {
+                    scanResult.setRoom(estimatedRoom.getName());
+                }
 
                 // only save to database if useful
                 if (scanResult.hasRoom()) {

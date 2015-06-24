@@ -178,34 +178,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 
 	// CLASSIFICATION
 	public Instance.Activities classify() {
-		int count = data.size();
-
-		double sumMagnitude = 0;
-		double maxMagnitude = 0;
-		float time = 0;
-
-		for (Measurement line : data) {
-			sumMagnitude += line.getMagnitude();
-
-			if (line.getMagnitude() > maxMagnitude) {
-				maxMagnitude = line.getMagnitude();
-			}
-
-			time = line.getTime();
-		}
-
-		double meanMagnitude = sumMagnitude / count;
-
-		double varianceMagnitude = 0;
-		for (Measurement line : data) {
-			varianceMagnitude += Math.pow(line.getMagnitude() - meanMagnitude, 2);
-		}
-		varianceMagnitude /= count;
-
-		// HERE WE SHOULD CREATE FEATURES
-		// like mean magnitude, std magnitude, mean x, mean y.. etc
-
-		Instance classificationInstance = new Instance(trainingStatus.toString(), meanMagnitude, maxMagnitude, varianceMagnitude, time);
+		Instance classificationInstance = Knn.createInstanceFromMeasurements(data, trainingStatus.toString());
 
 		saving_data += classificationInstance + "\n";
 
