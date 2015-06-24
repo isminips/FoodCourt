@@ -14,7 +14,7 @@ import com.example.foodcourt.activity.ActivityList;
 import com.example.foodcourt.knn.FileReader;
 import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.knn.Knn;
-import com.example.foodcourt.knn.Label;
+import com.example.foodcourt.activity.Measurement;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,19 +25,19 @@ import java.util.ArrayList;
 
 public class ActivityMonitoringActivity extends BaseActivity implements SensorEventListener {
 
-    private final int TIER_1_SAMPLING_TIME = 1000;
-    private final int TIER_2_SAMPLING_TIME = 2;
+    public static final int TIER_1_SAMPLING = 10;
+    public static final int TIER_2_SAMPLING = 2;
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
-	private String data;
+	private ArrayList<Measurement> data;
 	private String saving_data="";
 	private float starttime;
 	private ActivityList activityList;
-	private Label.Activities trainingStatus = Label.Activities.Standing;
+	private Instance.Activities trainingStatus = Instance.Activities.Standing;
     ArrayList<Instance> trainingSet = null;
-    ArrayList<Label.Activities> tier1 = null;
-    ArrayList<Label.Activities> tier2 = null;
+    ArrayList<Instance.Activities> tier1 = null;
+    ArrayList<Instance.Activities> tier2 = null;
 
     @Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -52,7 +52,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
         }
 
 		try {
-            trainingSet = loadTrainingSet("trainingSet7.csv");
+            trainingSet = loadTrainingSet("dummySet.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -63,7 +63,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
         InputStream trainStream = getAssets().open(filename);
         FileReader trainReader = new FileReader(trainStream);
-        return trainReader.buildInstances(40);
+        return trainReader.buildInstances();
     }
 
     public void initializeViews() {
@@ -72,11 +72,11 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	private void reset() {
-		data = "";
+		data = new ArrayList<Measurement>();
 		starttime = 0;
 		activityList = new ActivityList();
-		tier1 = new ArrayList<Label.Activities>();
-		tier2 = new ArrayList<Label.Activities>();
+		tier1 = new ArrayList<Instance.Activities>();
+		tier2 = new ArrayList<Instance.Activities>();
 	}
 
 	// onResume() register the accelerometer for listening the events
@@ -107,14 +107,14 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		now = event.timestamp;
 		time = Math.round((now - starttime) / 1000000);
 
-		double magnitude = Math.sqrt(x * x + y * y + z * z);
-		data += trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
-		saving_data +=trainingStatus.toString()+ "," + x + "," + y + "," + z + ","+ magnitude + "," + time + "\n";
-		log("acc data:" +trainingStatus.toString()+","+ x +","+ y +","+ z +","+ magnitude +"," + time + "\n");
+		Measurement measurement = new Measurement(x, y, z, time);
 
-		if (time > TIER_1_SAMPLING_TIME) {
+		data.add(measurement);
+		log("Acc data [" + data.size() + "]:" + measurement);
+
+		if (data.size() >= TIER_1_SAMPLING) {
 			tier1.add(classify());
-			data = "";
+			data.clear();
 		}
 	}
 
@@ -177,13 +177,42 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	// CLASSIFICATION
-	public Label.Activities classify() {
-		starttime = 0;
+	public Instance.Activities classify() {
+		int count = data.size();
 
-		Label.Activities currentActivity = Knn.classify(data, trainingSet);
+		double sumMagnitude = 0;
+		double maxMagnitude = 0;
+		float time = 0;
+
+		for (Measurement line : data) {
+			sumMagnitude += line.getMagnitude();
+
+			if (line.getMagnitude() > maxMagnitude) {
+				maxMagnitude = line.getMagnitude();
+			}
+
+			time = line.getTime();
+		}
+
+		double meanMagnitude = sumMagnitude / count;
+
+		double varianceMagnitude = 0;
+		for (Measurement line : data) {
+			varianceMagnitude += Math.pow(line.getMagnitude() - meanMagnitude, 2);
+		}
+		varianceMagnitude /= count;
+
+		// HERE WE SHOULD CREATE FEATURES
+		// like mean magnitude, std magnitude, mean x, mean y.. etc
+
+		Instance classificationInstance = new Instance(trainingStatus.toString(), meanMagnitude, maxMagnitude, varianceMagnitude, time);
+
+		saving_data += classificationInstance + "\n";
+
+		Instance.Activities currentActivity = Knn.classify(classificationInstance, trainingSet);
 		currentActivityLabel.setText(currentActivity.toString());
 
-		log("Current activity: " + currentActivity.toString());
+		log("Current activity: " + currentActivity.toString() + " - instance: " + classificationInstance);
 
 		return currentActivity;
 	}
@@ -193,7 +222,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		int time = 0;
 		int processing = 0;
 		activityList = new ActivityList();
-		for (Label.Activities tier1activity : tier1) {
+		for (Instance.Activities tier1activity : tier1) {
 			time++;
 			processing++;
 			activityList.add(tier1activity, time);
@@ -206,8 +235,8 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 					break;
 				default: throw new IllegalArgumentException("UNKNOWN classification");
 			}
-			if (processing >= TIER_2_SAMPLING_TIME) {
-				Label.Activities tier2Activity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
+			if (processing >= TIER_2_SAMPLING) {
+				Instance.Activities tier2Activity = walking >= standing ? Instance.Activities.Walking : Instance.Activities.Standing;
 				tier2.add(tier2Activity);
 				processing = 0; walking = 0; standing = 0;
 			}
@@ -236,7 +265,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 			myOutWriter.close();
 			fOut.close();
 			toast("Done writing file in SD");
-			log(data);
+			log(saving_data);
 		} catch (Exception e) {
 			toast(e.getMessage());
 		}
@@ -244,10 +273,10 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	public void changeLoggingActivity(View view) {
-		if (trainingStatus == Label.Activities.Standing) {
-			trainingStatus = Label.Activities.Walking;
+		if (trainingStatus == Instance.Activities.Standing) {
+			trainingStatus = Instance.Activities.Walking;
 		} else {
-			trainingStatus = Label.Activities.Standing;
+			trainingStatus = Instance.Activities.Standing;
 		}
 
 		Button p1_button = (Button) findViewById(R.id.change);

@@ -1,6 +1,6 @@
 package com.example.foodcourt.activity;
 
-import com.example.foodcourt.knn.Label;
+import com.example.foodcourt.knn.Instance;
 
 import java.util.ArrayList;
 
@@ -30,7 +30,7 @@ public class ActivityList {
 	 * @param type
 	 * @param time
 	 */
-	public void add(Label.Activities type, int time) {
+	public void add(Instance.Activities type, int time) {
 		if(activityList.size() > 0 && activityList.get(activityList.size()-1).getType() == type) {
 			activityList.get(activityList.size()-1).setEnd(time);
 		} else {
@@ -50,7 +50,7 @@ public class ActivityList {
 	public int totalWalkingTime() {
 		int time = 0;
 		for (Period p : activityList) {
-			if (p.getType() == Label.Activities.Walking) {
+			if (p.getType() == Instance.Activities.Walking) {
 				time += p.getTime();
 			}
 		}
@@ -60,7 +60,7 @@ public class ActivityList {
 	public int totalStandingTime() {
 		int time = 0;
 		for (Period p : activityList) {
-			if (p.getType() == Label.Activities.Standing) {
+			if (p.getType() == Instance.Activities.Standing) {
 				time += p.getTime();
 			}
 		}
@@ -87,7 +87,7 @@ public class ActivityList {
 			return -1;
 
 		for (Period p : activityList) {
-			if (p.getType() == Label.Activities.Standing && p.getStart() >= queueStart && p.getEnd() <= queueEnd) {
+			if (p.getType() == Instance.Activities.Standing && p.getStart() >= queueStart && p.getEnd() <= queueEnd) {
 				totalServiceTime += p.getTime();
 				services++;
 			}
@@ -107,7 +107,7 @@ public class ActivityList {
 	public int getQueueingStartTime() {
 		for (int i = 0; i < activityList.size(); i++) {
 			Period p = activityList.get(i);
-			if (p.getType() == Label.Activities.Walking) {
+			if (p.getType() == Instance.Activities.Walking) {
 				return activityList.get(i+1).getStart();
 			}
 		}
@@ -117,7 +117,7 @@ public class ActivityList {
 	public int getQueueingEndTime() {
 		for (int i = activityList.size()-1; i >= 0; i--) {
 			Period p = activityList.get(i);
-			if (p.getType() == Label.Activities.Walking && p.getTime() > 10) {
+			if (p.getType() == Instance.Activities.Walking && p.getTime() > 10) {
 				return activityList.get(i-1).getEnd();
 			}
 		}

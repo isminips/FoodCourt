@@ -11,7 +11,6 @@ import com.example.foodcourt.LocalizationActivity;
 import com.example.foodcourt.knn.FileReader;
 import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.knn.Knn;
-import com.example.foodcourt.knn.Label;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -138,9 +137,9 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
                 double azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll (in radians)
 
                 if (trainingSet != null) {
-                    Label.Activities activity = Knn.classify(movementData, trainingSet);
+                    Instance.Activities activity = Knn.classify(movementData, trainingSet);
 
-                    if (activity == Label.Activities.Walking) {
+                    if (activity == Instance.Activities.Walking) {
                         // TODO create proper angle
                         double deviceOrientationDegrees = Math.toDegrees(azimuth) + BUILDING_ORIENTATION;
                         deviceOrientationDegrees = deviceOrientationDegrees >= 0 ? deviceOrientationDegrees : deviceOrientationDegrees + 360;
