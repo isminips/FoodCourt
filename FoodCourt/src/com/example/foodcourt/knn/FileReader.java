@@ -24,7 +24,6 @@ public class FileReader {
 			String line;
 			int numa = 1;
 			Instance instance;
-			ArrayList<Feature> attributes;
 
 			while ((line = reader.readLine()) != null) {
 				StringTokenizer st = new StringTokenizer(line, ",");
@@ -36,26 +35,19 @@ public class FileReader {
 				}
 
 				String label = st.nextToken();
-				String x = st.nextToken();
-				String y = st.nextToken();
-				String z = st.nextToken();
-				String magnitude = st.nextToken();
+				String meanMagnitude = st.nextToken();
+				String maxMagnitude = st.nextToken();
+				String varianceMagnitude = st.nextToken();
 				String time = st.nextToken();
 
-				instance = new Instance();
-				attributes = instance.createAttributes(
+				instance = new Instance(
 						label,
-						Double.parseDouble(x),
-						Double.parseDouble(y),
-						Double.parseDouble(z),
-						Double.parseDouble(magnitude),
-						time
+						Double.parseDouble(meanMagnitude),
+						Double.parseDouble(maxMagnitude),
+						Double.parseDouble(varianceMagnitude),
+						Float.parseFloat(time)
 				);
 
-				Label labelObj = (Label) attributes.get(Knn.LABEL_INDEX);
-				instance.setLabel(labelObj.getValue());
-
-				instance.setAttributes(attributes);
 				instances.add(instance);
 			}
 

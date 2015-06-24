@@ -1,4 +1,4 @@
-package com.example.foodcourt.knn;
+package com.example.foodcourt.activity;
 
 public class Measurement {
     private float x;

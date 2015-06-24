@@ -14,12 +14,7 @@ import com.example.foodcourt.activity.ActivityList;
 import com.example.foodcourt.knn.FileReader;
 import com.example.foodcourt.knn.Instance;
 import com.example.foodcourt.knn.Knn;
-import com.example.foodcourt.knn.Label;
-import com.example.foodcourt.knn.Magnitude;
-import com.example.foodcourt.knn.Measurement;
-import com.example.foodcourt.knn.X;
-import com.example.foodcourt.knn.Y;
-import com.example.foodcourt.knn.Z;
+import com.example.foodcourt.activity.Measurement;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,10 +34,10 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private String saving_data="";
 	private float starttime;
 	private ActivityList activityList;
-	private Label.Activities trainingStatus = Label.Activities.Standing;
+	private Instance.Activities trainingStatus = Instance.Activities.Standing;
     ArrayList<Instance> trainingSet = null;
-    ArrayList<Label.Activities> tier1 = null;
-    ArrayList<Label.Activities> tier2 = null;
+    ArrayList<Instance.Activities> tier1 = null;
+    ArrayList<Instance.Activities> tier2 = null;
 
     @Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -57,7 +52,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
         }
 
 		try {
-            trainingSet = loadTrainingSet("trainingSet8.csv");
+            trainingSet = loadTrainingSet("dummySet.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -80,8 +75,8 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		data = new ArrayList<Measurement>();
 		starttime = 0;
 		activityList = new ActivityList();
-		tier1 = new ArrayList<Label.Activities>();
-		tier2 = new ArrayList<Label.Activities>();
+		tier1 = new ArrayList<Instance.Activities>();
+		tier2 = new ArrayList<Instance.Activities>();
 	}
 
 	// onResume() register the accelerometer for listening the events
@@ -115,7 +110,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		Measurement measurement = new Measurement(x, y, z, time);
 
 		data.add(measurement);
-		log("Acc data ["+data.size()+"]:" + measurement);
+		log("Acc data [" + data.size() + "]:" + measurement);
 
 		if (data.size() >= TIER_1_SAMPLING) {
 			tier1.add(classify());
@@ -182,35 +177,39 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	// CLASSIFICATION
-	public Label.Activities classify() {
-		Instance classificationInstance = new Instance();
+	public Instance.Activities classify() {
+		int count = data.size();
 
-		double ax = 0;
-		double ay = 0;
-		double az = 0;
-		double amag = 0;
+		double sumMagnitude = 0;
+		double maxMagnitude = 0;
 		float time = 0;
 
 		for (Measurement line : data) {
-			ax += line.getX();
-			ay += line.getY();
-			az += line.getZ();
+			sumMagnitude += line.getMagnitude();
 
-			amag += line.getMagnitude();
+			if (line.getMagnitude() > maxMagnitude) {
+				maxMagnitude = line.getMagnitude();
+			}
 
 			time = line.getTime();
 		}
 
+		double meanMagnitude = sumMagnitude / count;
+
+		double varianceMagnitude = 0;
+		for (Measurement line : data) {
+			varianceMagnitude += Math.pow(line.getMagnitude() - meanMagnitude, 2);
+		}
+		varianceMagnitude /= count;
+
 		// HERE WE SHOULD CREATE FEATURES
 		// like mean magnitude, std magnitude, mean x, mean y.. etc
-		// these should replace the current Feature classes like Magnitude, X, Y, Z etc..
 
-		int count = data.size();
-		classificationInstance.createAttributes(trainingStatus.toString(), ax/count, ay/count, az/count, amag/count, time+"");
+		Instance classificationInstance = new Instance(trainingStatus.toString(), meanMagnitude, maxMagnitude, varianceMagnitude, time);
 
 		saving_data += classificationInstance + "\n";
 
-		Label.Activities currentActivity = Knn.classify(classificationInstance, trainingSet);
+		Instance.Activities currentActivity = Knn.classify(classificationInstance, trainingSet);
 		currentActivityLabel.setText(currentActivity.toString());
 
 		log("Current activity: " + currentActivity.toString() + " - instance: " + classificationInstance);
@@ -223,7 +222,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		int time = 0;
 		int processing = 0;
 		activityList = new ActivityList();
-		for (Label.Activities tier1activity : tier1) {
+		for (Instance.Activities tier1activity : tier1) {
 			time++;
 			processing++;
 			activityList.add(tier1activity, time);
@@ -237,7 +236,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 				default: throw new IllegalArgumentException("UNKNOWN classification");
 			}
 			if (processing >= TIER_2_SAMPLING) {
-				Label.Activities tier2Activity = walking >= standing ? Label.Activities.Walking : Label.Activities.Standing;
+				Instance.Activities tier2Activity = walking >= standing ? Instance.Activities.Walking : Instance.Activities.Standing;
 				tier2.add(tier2Activity);
 				processing = 0; walking = 0; standing = 0;
 			}
@@ -274,10 +273,10 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	public void changeLoggingActivity(View view) {
-		if (trainingStatus == Label.Activities.Standing) {
-			trainingStatus = Label.Activities.Walking;
+		if (trainingStatus == Instance.Activities.Standing) {
+			trainingStatus = Instance.Activities.Walking;
 		} else {
-			trainingStatus = Label.Activities.Standing;
+			trainingStatus = Instance.Activities.Standing;
 		}
 
 		Button p1_button = (Button) findViewById(R.id.change);

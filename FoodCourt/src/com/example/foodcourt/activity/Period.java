@@ -1,17 +1,17 @@
 package com.example.foodcourt.activity;
 
-import com.example.foodcourt.knn.Label;
+import com.example.foodcourt.knn.Instance;
 
 public class Period {
 
-	private Label.Activities type;
+	private Instance.Activities type;
 	private int start;
 	private int end;
 
-	public Period(Label.Activities type) {
+	public Period(Instance.Activities type) {
 		this.type = type;
 	}
-	public Period(Label.Activities type, int start) {
+	public Period(Instance.Activities type, int start) {
 		this.type = type;
 		setStart(start);
 		setEnd(start);
@@ -33,7 +33,7 @@ public class Period {
 		this.end = end;
 	}
 
-	public Label.Activities getType() {
+	public Instance.Activities getType() {
 		return type;
 	}
 
