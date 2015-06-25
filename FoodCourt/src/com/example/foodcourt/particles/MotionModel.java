@@ -178,7 +178,6 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
             float time = System.currentTimeMillis() - measureStart;
 
             Measurement measurement = new Measurement(x, y, z, time);
-
             movementData.add(measurement);
             //System.out.println("Acc data [" + movementData.size() + "]:" + measurement);
         }

@@ -223,7 +223,7 @@ public class LocalizationActivity extends BaseActivity {
 		log("Wifi results obtained: " + results.size() + " results");
 
 		if (results.size() > 0) {
-			wifiScanData.put(results.get(0).getTimestamp(), results);
+			wifiScanData.put(results.get(results.size()-1).getTimestamp(), results);
 		}
 
 		wifiManager.startScan();

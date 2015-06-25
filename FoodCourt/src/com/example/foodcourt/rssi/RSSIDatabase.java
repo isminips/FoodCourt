@@ -251,7 +251,7 @@ public class RSSIDatabase {
                 }
 
                 // Normalize over number of times this RSSI/mac is found in this room
-                distance += Math.abs((level - compLevel) / compList.size());
+                distance += Math.pow(level - compLevel, 2) / compList.size();
                 matches++;
             }
 

@@ -27,11 +27,10 @@ public class WifiScanReceiver extends BroadcastReceiver {
     public void onReceive(Context c, Intent intent) {
         List<ScanResult> wifiScanList = wifiManager.getScanResults();
         List<WifiResult> results = new ArrayList<WifiResult>();
-        long timestamp = System.currentTimeMillis();
 
         for (ScanResult scan : wifiScanList) {
             int channel = ((scan.frequency - 2412) / 5) + 1;  //calculates accurately for channels 1-13. Channel 14 is not generally available.
-            results.add(new WifiResult(scan.BSSID, scan.SSID, scan.level, channel, timestamp));
+            results.add(new WifiResult(scan.BSSID, scan.SSID, scan.level, channel, scan.timestamp));
         }
 
         activity.updateRSSI(results);
