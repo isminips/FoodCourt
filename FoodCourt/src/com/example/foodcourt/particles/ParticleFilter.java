@@ -15,6 +15,9 @@ public class ParticleFilter {
         // Move the cloud
         particleList = moveCloud(particleList, movement.getMovement());
 
+        // If long stretched line, make small spread along the axis with smallest variance
+        particleList = checkSpread(particleList);
+
         // Kill infeasible particles
         particleList = weightCloud(particleList, rooms, movement.getMovement());
 
@@ -76,6 +79,49 @@ public class ParticleFilter {
         }
 
         return newList;
+    }
+
+    // Return a list of spread particles
+    private static List<Particle> checkSpread(List<Particle> particles) {
+        double sumx = 0, sumy = 0;
+
+        for (Particle p : particles) {
+            sumx += p.getX();
+            sumy += p.getY();
+        }
+
+        double meanx = sumx / particles.size();
+        double meany = sumy / particles.size();
+
+        double varx = 0, vary = 0;
+
+        for (Particle p : particles) {
+            varx += Math.pow(p.getX() - meanx, 2);
+            vary += Math.pow(p.getY() - meany, 2);
+        }
+
+        varx /= particles.size();
+        vary /= particles.size();
+
+        double spreadRatio = 0.2;
+        Random rnd = new Random();
+
+        if (varx > spreadRatio && vary > spreadRatio)
+            return particles;
+
+        for (Particle p : particles) {
+            if (varx < spreadRatio)
+                p.move(getRandomDisplacement(rnd), 0);
+
+            if (vary < spreadRatio)
+                p.move(0, getRandomDisplacement(rnd));
+        }
+
+        return particles;
+    }
+
+    private static double getRandomDisplacement(Random rnd) {
+        return (rnd.nextDouble() - 0.5) / 1.5;
     }
 
 }

@@ -288,7 +288,7 @@ public class LocalizationActivity extends BaseActivity {
 			log("Particles have not converged yet");
 		}
 
-		if (wifiScanData.size() > 0 && rssiDatabase.size() > 0) {
+		if (wifiScanData.size() > 0 && rssiDatabase != null && rssiDatabase.size() > 0) {
 			toast("Estimating position based on RSSI...");
 
 			List<WifiResult> lastScan = wifiScanData.pollLastEntry().getValue();

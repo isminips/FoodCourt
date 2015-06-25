@@ -22,8 +22,6 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
     private LocalizationActivity activity;
 
-    private boolean processing = false;
-
     private SensorManager sensorManager;
     private Sensor magnetometer;
     private Sensor accelerometer;
@@ -103,7 +101,6 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
      * Move inertial point after values for all three sets of data (gravity, geomagnetic and linear acceleration) have been received.
      */
     private boolean processSensorValues() {
-        processing = true;
         boolean success = false;
 
         if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.size() > 0) {
@@ -126,7 +123,9 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
                 double azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll (in radians)
 
                 if (trainingSet != null) {
-                    Instance instance = Knn.createInstanceFromMeasurements(movementData, "Undefined");
+                    ArrayList<Measurement> movementDataCopy = new ArrayList<Measurement>();
+                    movementDataCopy.addAll(movementData);
+                    Instance instance = Knn.createInstanceFromMeasurements(movementDataCopy, "Undefined");
                     Instance.Activities activity = Knn.classify(instance, trainingSet);
 
                     if (activity == Instance.Activities.Walking) {
@@ -134,7 +133,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
                         deviceOrientationDegrees = deviceOrientationDegrees >= 0 ? deviceOrientationDegrees : deviceOrientationDegrees + 360;
 
                         // TODO determine best speed
-                        double speed = 1; // speed in m/s
+                        double speed = 3; // speed in m/s
 
                         // Get elapsed time
                         int elapsedMs = (int) (movementData.get(movementData.size()-1).getTime() - movementData.get(0).getTime());
@@ -157,7 +156,6 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
             measureStart = System.currentTimeMillis();
         }
 
-        processing = false;
         return success;
     }
 
@@ -181,9 +179,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
             Measurement measurement = new Measurement(x, y, z, time);
 
-            if (!processing)
-                movementData.add(measurement);
-
+            movementData.add(measurement);
             //System.out.println("Acc data [" + movementData.size() + "]:" + measurement);
         }
     }

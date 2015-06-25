@@ -26,6 +26,7 @@ public class RSSIDatabase {
     private TreeMap<String, TreeMap<String, List<WifiResult>>> database;
     private long lastMappedTime;
     private static String FILE = "/sdcard/rssiDatabase.txt";
+    public static final String SEPARATOR = ";";
 
     public RSSIDatabase() {
         database = new TreeMap<String, TreeMap<String, List<WifiResult>>>();
@@ -169,7 +170,7 @@ public class RSSIDatabase {
             String line;
             WifiResult result;
             while ((line = reader.readLine()) != null) {
-                StringTokenizer st = new StringTokenizer(line, ",");
+                StringTokenizer st = new StringTokenizer(line, SEPARATOR);
 
                 String BSSID = st.nextToken();
                 String SSID = st.nextToken();

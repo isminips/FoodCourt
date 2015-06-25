@@ -50,10 +50,11 @@ public class WifiResult {
     }
 
     public String toString() {
-        String result = BSSID + "," + SSID + "," + level + "," + channel + "," + timestamp;
+        String separator = RSSIDatabase.SEPARATOR;
+        String result = BSSID + separator + SSID + separator + level + separator + channel + separator + timestamp;
 
         if (hasRoom()) {
-            result += "," + room;
+            result += separator + room;
         }
 
         return result;
