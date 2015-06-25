@@ -15,7 +15,7 @@ import com.example.foodcourt.particles.Particle;
 import com.example.foodcourt.particles.ParticleFilter;
 import com.example.foodcourt.particles.Point;
 import com.example.foodcourt.particles.RoomInfo;
-import com.example.foodcourt.particles.Sensors;
+import com.example.foodcourt.particles.MotionModel;
 import com.example.foodcourt.particles.Visualisation;
 import com.example.foodcourt.rssi.RSSIDatabase;
 import com.example.foodcourt.rssi.WifiResult;
@@ -32,7 +32,7 @@ import java.util.TreeMap;
 
 public class LocalizationActivity extends BaseActivity {
 
-	private Sensors sensors;
+	private MotionModel motionModel;
 	private WifiManager wifiManager;
 	private WifiScanReceiver wifiReciever;
 	public final static int NUMBER_PARTICLES = 1000;
@@ -84,18 +84,18 @@ public class LocalizationActivity extends BaseActivity {
 		initializeParticleCloud();
 		initializeRSSI();
 		loadRSSIdatabase();
-		initializeSensors();
+		initializeMotionModel();
 	}
 
 	/*protected void onResume() {
 		super.onResume();
-		initializeSensors();
+		initializeMotionModel();
 		initializeWifiSensors();
 	}
 
 	protected void onPause() {
 		super.onPause();
-		unregisterSensors();
+		unregisterMotionModel();
 		unregisterWifiSensors();
 	}*/
 
@@ -105,9 +105,9 @@ public class LocalizationActivity extends BaseActivity {
 		stop();
 	}
 
-	private void initializeSensors() {
-		sensors = new Sensors(this);
-		sensors.execute();
+	private void initializeMotionModel() {
+		motionModel = new MotionModel(this);
+		motionModel.execute();
 	}
 
 	private void initializeWifiSensors() {
@@ -121,15 +121,15 @@ public class LocalizationActivity extends BaseActivity {
 	}
 
 	private void stop() {
-		unregisterSensors();
+		unregisterMotionModel();
 		unregisterWifiSensors();
 		visualizationUpdater.removeCallbacks(visualizationUpdate);
 		saveRSSIdatabase();
 	}
 
-	private void unregisterSensors() {
-		if (sensors != null) {
-			sensors.cancel(true);
+	private void unregisterMotionModel() {
+		if (motionModel != null) {
+			motionModel.cancel(true);
 		}
 	}
 

@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-public class Sensors extends AsyncTask<String, Movement, Void> implements SensorEventListener {
+public class MotionModel extends AsyncTask<String, Movement, Void> implements SensorEventListener {
 
     private LocalizationActivity activity;
 
@@ -37,7 +37,7 @@ public class Sensors extends AsyncTask<String, Movement, Void> implements Sensor
     private ArrayList<Measurement> movementData = new ArrayList<Measurement>();
     private ArrayList<Instance> trainingSet;
 
-    public Sensors(LocalizationActivity activity) {
+    public MotionModel(LocalizationActivity activity) {
         this.activity = activity;
     }
 
