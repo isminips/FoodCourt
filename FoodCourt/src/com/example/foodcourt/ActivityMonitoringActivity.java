@@ -52,7 +52,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
         }
 
 		try {
-            trainingSet = loadTrainingSet("dummySet.csv");
+            trainingSet = loadTrainingSet("trainingSet9.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

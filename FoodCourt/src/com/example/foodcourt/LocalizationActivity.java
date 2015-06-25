@@ -41,7 +41,6 @@ public class LocalizationActivity extends BaseActivity {
 	private Cloud particleCloud;
 	private Visualisation visualisation;
 	private Compass compass;
-	private String angles = ""; // for debugging purposes
 	private HashMap<String, RoomInfo> roomInfo;
 	double totalArea = 0;
 	private TreeMap<Long, List<WifiResult>> wifiScanData;
@@ -176,34 +175,10 @@ public class LocalizationActivity extends BaseActivity {
 		movementData = new TreeMap<Long, Movement>();
 
 		updateVisualization();
-
-		saveAngles(); // TODO remove debug
-	}
-
-	/**
-	 * For debugging purposes
-	 */
-	private void saveAngles() {
-		if (angles.length() == 0) return;
-
-		try {
-			File myFile = new File("/sdcard/angles_"+System.currentTimeMillis()+".txt");
-			myFile.createNewFile();
-			FileOutputStream fOut = new FileOutputStream(myFile);
-			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-			myOutWriter.append(angles);
-			myOutWriter.close();
-			fOut.close();
-			toast("Done writing angles to SD");
-			angles = "";
-		} catch (Exception e) {
-			toast(e.getMessage());
-		}
 	}
 
 	public void updateParticleCloud(Movement movement) {
 		log(movement);
-		angles += movement.getAngle() + "\n"; // TODO remove debug
 
 		movementData.put(System.currentTimeMillis(), movement);
 

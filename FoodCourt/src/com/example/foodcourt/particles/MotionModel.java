@@ -33,7 +33,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
     private float[] mGravity = null;
 
     public static final Double BUILDING_ORIENTATION = -157.0;
-    public static final Double DEVICE_ORIENTATION = -90.0;
+    public static final Double DEVICE_ORIENTATION = 90.0;
 
     private long measureStart = System.currentTimeMillis();
     private ArrayList<Measurement> movementData = new ArrayList<Measurement>();
@@ -83,7 +83,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
             // Load KNN training set
             try {
-                InputStream trainStream = activity.getAssets().open("dummySet.csv");
+                InputStream trainStream = activity.getAssets().open("trainingSet9.csv");
                 FileReader trainReader = new FileReader(trainStream);
                 trainingSet = trainReader.buildInstances();
             } catch (IOException e) {
@@ -130,7 +130,6 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
                     Instance.Activities activity = Knn.classify(instance, trainingSet);
 
                     if (activity == Instance.Activities.Walking) {
-                        // TODO create proper angle
                         double deviceOrientationDegrees = Math.toDegrees(azimuth) + BUILDING_ORIENTATION + DEVICE_ORIENTATION;
                         deviceOrientationDegrees = deviceOrientationDegrees >= 0 ? deviceOrientationDegrees : deviceOrientationDegrees + 360;
 
