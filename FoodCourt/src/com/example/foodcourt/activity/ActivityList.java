@@ -30,11 +30,18 @@ public class ActivityList {
 	 * @param type
 	 * @param time
 	 */
-	public void add(Instance.Activities type, int time) {
+	public void add(Instance.Activities type, float time) {
 		if(activityList.size() > 0 && activityList.get(activityList.size()-1).getType() == type) {
 			activityList.get(activityList.size()-1).setEnd(time);
 		} else {
-			activityList.add(new Period(type, time));
+			float starttime = 0;
+			if (activityList.size() > 0) {
+				starttime = activityList.get(activityList.size()-1).getEnd();
+			}
+			Period newPeriod = new Period(type, starttime);
+			newPeriod.setEnd(time);
+			activityList.add(newPeriod);
+
 			switch(type) {
 				case Walking:
 					walkingPeriods++;
@@ -67,21 +74,21 @@ public class ActivityList {
 		return time;
 	}
 
-	public int totalQueueingTime() {
-		int queueStart = getQueueingStartTime();
-		int queueEnd = getQueueingEndTime();
+	public float totalQueueingTime() {
+		float queueStart = getQueueingStartTime();
+		float queueEnd = getQueueingEndTime();
 
 		if(queueEnd < 0)
 			return -1;
 
-		return queueEnd - queueStart + 1;
+		return queueEnd - queueStart;
 	}
 
 	public double averageServiceTime() {
 		double totalServiceTime = 0;
 		int services = 0;
-		int queueStart = getQueueingStartTime();
-		int queueEnd = getQueueingEndTime();
+		float queueStart = getQueueingStartTime();
+		float queueEnd = getQueueingEndTime();
 
 		if(queueEnd < 0)
 			return -1;
@@ -104,7 +111,7 @@ public class ActivityList {
 		return standingPeriods;
 	}
 
-	public int getQueueingStartTime() {
+	public float getQueueingStartTime() {
 		for (int i = 0; i < activityList.size(); i++) {
 			Period p = activityList.get(i);
 			if (p.getType() == Instance.Activities.Walking) {
@@ -114,10 +121,10 @@ public class ActivityList {
 		return -1;
 	}
 
-	public int getQueueingEndTime() {
+	public float getQueueingEndTime() {
 		for (int i = activityList.size()-1; i >= 0; i--) {
 			Period p = activityList.get(i);
-			if (p.getType() == Instance.Activities.Walking && p.getTime() > 10) {
+			if (p.getType() == Instance.Activities.Walking && p.getTime() > 10000) {
 				return activityList.get(i-1).getEnd();
 			}
 		}

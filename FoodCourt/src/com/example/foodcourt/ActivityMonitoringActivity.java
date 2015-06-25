@@ -27,7 +27,7 @@ import java.util.ArrayList;
 public class ActivityMonitoringActivity extends BaseActivity implements SensorEventListener {
 
     public static final int TIER_1_SAMPLING = 10;
-    public static final int TIER_2_SAMPLING = 2;
+    public static final int TIER_2_SAMPLING = 5;
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
@@ -37,15 +37,14 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	private ActivityList activityList;
 	private Instance.Activities trainingStatus = Instance.Activities.Standing;
     ArrayList<Instance> trainingSet = null;
-    ArrayList<Instance.Activities> tier1 = null;
-    ArrayList<Instance.Activities> tier2 = null;
+    ArrayList<Instance> tier1 = null;
+    ArrayList<Instance> tier2 = null;
 
     @Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		initializeViews();
-
 
         try {
             initializeAcc();
@@ -77,8 +76,8 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		data = new ArrayList<Measurement>();
 		starttime = 0;
 		activityList = new ActivityList();
-		tier1 = new ArrayList<Instance.Activities>();
-		tier2 = new ArrayList<Instance.Activities>();
+		tier1 = new ArrayList<Instance>();
+		tier2 = new ArrayList<Instance>();
 	}
 
 	// onResume() register the accelerometer for listening the events
@@ -179,29 +178,28 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	// CLASSIFICATION
-	public Instance.Activities classify() {
+	public Instance classify() {
 		Instance classificationInstance = Knn.createInstanceFromMeasurements(data, trainingStatus.toString());
 
+		// For creating a training set, keep this before the setting of the classified label!
 		saving_data += classificationInstance + "\n";
 
 		Instance.Activities currentActivity = Knn.classify(classificationInstance, trainingSet);
-		currentActivityLabel.setText(currentActivity.toString());
+		classificationInstance.setLabel(currentActivity);
 
+		currentActivityLabel.setText(currentActivity.toString());
 		log("Current activity: " + currentActivity.toString() + " - instance: " + classificationInstance);
 
-		return currentActivity;
+		return classificationInstance;
 	}
 
 	private void calculateTimes() {
 		int walking = 0, standing = 0;
-		int time = 0;
 		int processing = 0;
 		activityList = new ActivityList();
-		for (Instance.Activities tier1activity : tier1) {
-			time++;
+		for (Instance tier1activity : tier1) {
 			processing++;
-			activityList.add(tier1activity, time);
-			switch(tier1activity) {
+			switch(tier1activity.getLabel()) {
 				case Walking:
 					walking++;
 					break;
@@ -211,22 +209,33 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 				default: throw new IllegalArgumentException("UNKNOWN classification");
 			}
 			if (processing >= TIER_2_SAMPLING) {
-				Instance.Activities tier2Activity = walking >= standing ? Instance.Activities.Walking : Instance.Activities.Standing;
+				Instance tier2Activity = new Instance();
+				Instance.Activities label = walking >= standing ? Instance.Activities.Walking : Instance.Activities.Standing;
+				tier2Activity.setLabel(label);
+				tier2Activity.setTime(tier1activity.getTime());
 				tier2.add(tier2Activity);
 				processing = 0; walking = 0; standing = 0;
 			}
 		}
 
+		for (Instance tier2activity : tier2) {
+			activityList.add(tier2activity.getLabel(), tier2activity.getTime());
+		}
+
 		log(activityList.toString());
-		int totalQueueingTime = activityList.totalQueueingTime();
+		float totalQueueingTime = activityList.totalQueueingTime();
 		double averageServiceTime = activityList.averageServiceTime();
 		if (totalQueueingTime > 0 && averageServiceTime > 0) {
 			showInfo("Queueing information",
-					"Total queueing time: " + activityList.totalQueueingTime() + "\n" +
-							"Average service time: " + activityList.averageServiceTime());
+					"Total queueing time: " + msToS(activityList.totalQueueingTime()) + "\n" +
+							"Average service time: " + msToS(activityList.averageServiceTime()));
 		} else {
 			showInfo("Queueing not finished", "Please try again");
 		}
+	}
+
+	private double msToS(double ms) {
+		return (double) Math.round(ms/100) / 10;
 	}
 
 	// CREATE TRAINING DATA
@@ -244,7 +253,6 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		} catch (Exception e) {
 			toast(e.getMessage());
 		}
-
 	}
 
 	public void changeLoggingActivity(View view) {
