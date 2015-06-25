@@ -2,14 +2,11 @@ package com.example.foodcourt.knn;
 
 import com.example.foodcourt.activity.Measurement;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 
 public class Knn {
 	public static final int NUM_ATTRS = 5;
 	public static final int K = 5;
-
-	public static double averageDistance = 0;
 
 	public static Instance createInstanceFromMeasurements(ArrayList<Measurement> measurements, String trainingStatus) {
 		int count = measurements.size();
@@ -42,7 +39,13 @@ public class Knn {
 		return new Instance(trainingStatus, meanMagnitude, maxMagnitude, varianceMagnitude, time);
 	}
 
-	public static Instance.Activities determineMajority(ArrayList<Neighbor> neighbors) {
+	public static Instance.Activities classify(Instance instance, ArrayList<Instance> trainingSet) {
+		ArrayList<Neighbor> distances = Knn.calculateDistances(trainingSet, instance);
+		ArrayList<Neighbor> neighbors = Knn.getNearestNeighbors(distances);
+		return Knn.determineMajority(neighbors);
+	}
+
+	private static Instance.Activities determineMajority(ArrayList<Neighbor> neighbors) {
 		int walking = 0, standing = 0;
 
 		for (int i = 0; i < neighbors.size(); i++) {
@@ -50,8 +53,7 @@ public class Knn {
 			Instance instance = neighbor.getInstance();
 			if (instance.getLabel() == Instance.Activities.Walking) {
 				walking++;
-
-			} else {
+			} else if (instance.getLabel() == Instance.Activities.Standing) {
 				standing++;
 			}
 		}
@@ -63,65 +65,29 @@ public class Knn {
 		}
 	}
 
-	public static Instance.Activities classify(String data, ArrayList<Instance> trainingSet) {
-		ArrayList<Instance> newInstances;
-		Instance.Activities classification;
-		Instance classificationInstance;
-
-		FileReader newReader = new FileReader(new ByteArrayInputStream(data.getBytes()));
-		newInstances = newReader.buildInstances();
-
-		int walking = 0, standing = 0;
-		do {
-			classificationInstance = newInstances.remove(0);
-			classification = Knn.classify(classificationInstance, trainingSet);
-
-			switch(classification) {
-				case Walking: walking++; break;
-				case Standing: standing++; break;
-				default: throw new IllegalArgumentException("UNKNOWN classification");
-			}
-		} while (!newInstances.isEmpty());
-
-		return walking >= standing ? Instance.Activities.Walking : Instance.Activities.Standing;
-	}
-
-	public static Instance.Activities classify(Instance instance, ArrayList<Instance> trainingSet) {
-		ArrayList<Neighbor> distances = Knn.calculateDistances(trainingSet, instance);
-		ArrayList<Neighbor> neighbors = Knn.getNearestNeighbors(distances);
-		return Knn.determineMajority(neighbors);
-	}
-
-	public static ArrayList<Neighbor> getNearestNeighbors(ArrayList<Neighbor> distances) {
+	private static ArrayList<Neighbor> getNearestNeighbors(ArrayList<Neighbor> distances) {
 		ArrayList<Neighbor> neighbors = new ArrayList<Neighbor>();
 
 		for (int i = 0; i < K; i++) {
-			averageDistance += distances.get(i).getDistance();
-
 			neighbors.add(distances.get(i));
 		}
 
 		return neighbors;
 	}
 
-	public static ArrayList<Neighbor> calculateDistances(ArrayList<Instance> instances, Instance instance) {
+	private static ArrayList<Neighbor> calculateDistances(ArrayList<Instance> instances, Instance instance) {
 		ArrayList<Neighbor> distances = new ArrayList<Neighbor>();
-		Neighbor neighbor;
-		int distance = 0;
 
 		for (int i = 0; i < instances.size(); i++) {
 			Instance other = instances.get(i);
-			distance = 0;
-			neighbor = new Neighbor();
+			double distance = 0;
 
 			// for each feature, go through and calculate the "distance"
 			distance += Math.pow((other.getMeanMagnitude() - instance.getMeanMagnitude()), 2);
 			distance += Math.pow((other.getMaxMagnitude() - instance.getMaxMagnitude()), 2);
 			distance += Math.pow((other.getVarianceMagnitude() - instance.getVarianceMagnitude()), 2);
 
-			neighbor.setDistance(distance);
-			neighbor.setInstance(other);
-
+			Neighbor neighbor = new Neighbor(other, distance);
 			distances.add(neighbor);
 		}
 

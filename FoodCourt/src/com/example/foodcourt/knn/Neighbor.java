@@ -2,23 +2,23 @@ package com.example.foodcourt.knn;
 
 public class Neighbor {
 	private Instance instance;
-	private int distance;
+	private double distance;
 	
 	public Neighbor() {
 		setInstance(new Instance());
 		setDistance(0);
 	}
 	
-	public Neighbor(Instance instance, int distance) {
+	public Neighbor(Instance instance, double distance) {
 		this.setInstance(instance);
 		this.setDistance(distance);
 	}
 
-	public void setDistance(int distance) {
+	public void setDistance(double distance) {
 		this.distance = distance;
 	}
 
-	public int getDistance() {
+	public double getDistance() {
 		return distance;
 	}
 

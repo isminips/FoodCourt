@@ -30,10 +30,10 @@ public class Instance {
 	}
 
 	public static Activities determineActivity(String activity) {
-		if(activity.equals("Standing")) {
+		if (activity.equals("Standing")) {
 			return Activities.Standing;
 		}
-		else if(activity.equals("Walking")) {
+		else if (activity.equals("Walking")) {
 			return Activities.Walking;
 		}
 		return null;

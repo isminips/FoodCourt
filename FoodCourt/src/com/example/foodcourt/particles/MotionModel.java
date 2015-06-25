@@ -92,14 +92,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
     }
 
     private void unregisterSensors() {
-        if (accelerometer != null) {
-            sensorManager.unregisterListener(this, accelerometer);
-            accelerometer = null;
-        }
-        if (magnetometer != null) {
-            sensorManager.unregisterListener(this, magnetometer);
-            magnetometer = null;
-        }
+        sensorManager.unregisterListener(this);
     }
 
     /**

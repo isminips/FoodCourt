@@ -32,10 +32,6 @@ public class RSSIDatabase {
         lastMappedTime = System.currentTimeMillis();
     }
 
-    public TreeMap<String, TreeMap<String, List<WifiResult>>> getDatabase() {
-        return database;
-    }
-
     public int size() {
         return database.size();
     }

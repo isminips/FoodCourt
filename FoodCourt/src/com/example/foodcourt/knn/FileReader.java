@@ -15,11 +15,10 @@ public class FileReader {
 	}
 
 	public ArrayList<Instance> buildInstances() {
-		BufferedReader reader;
 		ArrayList<Instance> instances = new ArrayList<Instance>();
 
 		try {
-			reader = new BufferedReader(new InputStreamReader(stream));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 
 			String line;
 			int numa = 1;
@@ -30,7 +29,7 @@ public class FileReader {
 
 				numa++;
 				if (Knn.NUM_ATTRS != st.countTokens()) {
-					System.out.println("LINE: " + numa--);
+					System.out.println("LINE: " + --numa);
 					throw new Exception("Unknown number of attributes!");
 				}
 
@@ -50,6 +49,9 @@ public class FileReader {
 
 				instances.add(instance);
 			}
+
+			if (instances.size() < Knn.K)
+				throw new Exception("Training set smaller than K");
 
 		} catch (IOException e) {
 			System.out.println("Uh oh, got an IOException error: "
