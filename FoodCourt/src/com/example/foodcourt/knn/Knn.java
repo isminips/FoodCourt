@@ -35,7 +35,6 @@ public class Knn {
 
 		// HERE WE SHOULD CREATE FEATURES
 		// like mean magnitude, std magnitude, mean x, mean y.. etc
-
 		return new Instance(trainingStatus, meanMagnitude, maxMagnitude, varianceMagnitude, time);
 	}
 

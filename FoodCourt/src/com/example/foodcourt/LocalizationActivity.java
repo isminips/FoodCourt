@@ -61,6 +61,20 @@ public class LocalizationActivity extends BaseActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		try {
+			Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+
+				@Override
+				public void uncaughtException(Thread t, Throwable e) {
+					log("Uncaught Exception detected in thread {}" + t);
+					e.printStackTrace();
+				}
+			});
+		} catch (SecurityException e) {
+			log("Could not set the Default Uncaught Exception Handler");
+			e.printStackTrace();
+		}
+
 		initializeViews();
 
 		try {
@@ -224,7 +238,6 @@ public class LocalizationActivity extends BaseActivity {
 	private void initializeRSSI() {
 		unregisterWifiSensors();
 		initializeWifiSensors();
-		saveRSSIdatabase();
 		resetRSSImeasurements();
 	}
 

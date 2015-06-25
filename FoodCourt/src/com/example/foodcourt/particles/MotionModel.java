@@ -22,6 +22,8 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
     private LocalizationActivity activity;
 
+    private boolean processing = false;
+
     private SensorManager sensorManager;
     private Sensor magnetometer;
     private Sensor accelerometer;
@@ -46,8 +48,9 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         initializeSensors();
 
         while (!isCancelled()) {
-            if (movementData.size() >= ActivityMonitoringActivity.TIER_1_SAMPLING)
+            if (movementData.size() >= ActivityMonitoringActivity.TIER_1_SAMPLING) {
                 processSensorValues();
+            }
         }
 
         unregisterSensors();
@@ -100,6 +103,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
      * Move inertial point after values for all three sets of data (gravity, geomagnetic and linear acceleration) have been received.
      */
     private boolean processSensorValues() {
+        processing = true;
         boolean success = false;
 
         if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.size() > 0) {
@@ -154,6 +158,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
             measureStart = System.currentTimeMillis();
         }
 
+        processing = false;
         return success;
     }
 
@@ -177,7 +182,9 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
             Measurement measurement = new Measurement(x, y, z, time);
 
-            movementData.add(measurement);
+            if (!processing)
+                movementData.add(measurement);
+
             //System.out.println("Acc data [" + movementData.size() + "]:" + measurement);
         }
     }

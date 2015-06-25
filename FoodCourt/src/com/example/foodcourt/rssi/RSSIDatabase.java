@@ -193,7 +193,7 @@ public class RSSIDatabase {
         }
 
         System.out.println("Loaded database from SD: "+database.size()+ " rooms");
-        System.out.println(database);
+        //System.out.println(database);
 
         return database;
     }
