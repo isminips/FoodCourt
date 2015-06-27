@@ -28,7 +28,7 @@ import java.util.List;
 public class ActivityMonitoringActivity extends BaseActivity implements SensorEventListener {
 
 	public static final int TIER_1_SAMPLING = 10;
-	public static final int TIER_2_SAMPLING = 5;
+	public static final int TIER_2_SAMPLING = 4;
 
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
@@ -125,7 +125,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		Measurement measurement = new Measurement(x, y, z, time);
 
 		data.add(measurement);
-		log("Acc data [" + data.size() + "]:" + measurement);
+		//log("Acc data [" + data.size() + "]:" + measurement);
 
 		if (data.size() >= TIER_1_SAMPLING) {
 			tier1.add(tier1classify(data));
@@ -205,7 +205,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		classificationInstance.setLabel(currentActivity);
 
 		currentActivityLabel.setText(currentActivity.toString());
-		log("Current activity: " + currentActivity.toString() + " - instance: " + classificationInstance);
+		log("Tier 1: " + classificationInstance);
 
 		return classificationInstance;
 	}
@@ -215,6 +215,8 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 		long time = 0;
 
 		for (Instance tier1activity : tier1data) {
+			time = tier1activity.getTime();
+
 			switch (tier1activity.getLabel()) {
 				case Walking:
 					walking++;
@@ -225,14 +227,14 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 				default:
 					throw new IllegalArgumentException("UNKNOWN classification");
 			}
-
-			time = tier1activity.getTime();
 		}
 
 		Instance.Activities label = Instance.determineActivity(standing, walking);
 		Instance tier2Activity = new Instance();
 		tier2Activity.setLabel(label);
 		tier2Activity.setTime(time);
+
+		log("Tier 2: " + label + " - time: " + time);
 
 		if (tier2CurrentActivity != label) {
 			tier2ActivitySwitches++;
