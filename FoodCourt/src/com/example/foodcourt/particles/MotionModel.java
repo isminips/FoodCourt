@@ -175,7 +175,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
             float x = event.values[0];
             float y = event.values[1];
             float z = event.values[2];
-            float time = System.currentTimeMillis() - measureStart;
+            long time = System.currentTimeMillis() - measureStart;
 
             Measurement measurement = new Measurement(x, y, z, time);
             movementData.add(measurement);

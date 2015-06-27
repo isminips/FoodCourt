@@ -11,13 +11,13 @@ public class Instance {
 	private double meanMagnitude;
 	private double maxMagnitude;
 	private double varianceMagnitude;
-	private float time;
+	private long time;
 
 	public Instance() {
 		// empty constructor
 	}
 
-	public Instance(String label, double meanMagnitude, double maxMagnitude, double varianceMagnitude, float time) {
+	public Instance(String label, double meanMagnitude, double maxMagnitude, double varianceMagnitude, long time) {
 		this.label = determineActivity(label);
 		this.meanMagnitude = meanMagnitude;
 		this.maxMagnitude = maxMagnitude;
@@ -37,6 +37,10 @@ public class Instance {
 			return Activities.Walking;
 		}
 		return null;
+	}
+
+	public static Activities determineActivity(int standing, int walking) {
+		return walking > standing ? Instance.Activities.Walking : Instance.Activities.Standing;
 	}
 
 	public Activities getLabel() {
@@ -67,11 +71,11 @@ public class Instance {
 		this.varianceMagnitude = varianceMagnitude;
 	}
 
-	public float getTime() {
+	public long getTime() {
 		return time;
 	}
 
-	public void setTime(float time) {
+	public void setTime(long time) {
 		this.time = time;
 	}
 

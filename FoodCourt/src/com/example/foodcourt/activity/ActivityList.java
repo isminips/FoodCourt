@@ -30,11 +30,11 @@ public class ActivityList {
 	 * @param type
 	 * @param time
 	 */
-	public void add(Instance.Activities type, float time) {
+	public void add(Instance.Activities type, long time) {
 		if(activityList.size() > 0 && activityList.get(activityList.size()-1).getType() == type) {
 			activityList.get(activityList.size()-1).setEnd(time);
 		} else {
-			float starttime = 0;
+			long starttime = 0;
 			if (activityList.size() > 0) {
 				starttime = activityList.get(activityList.size()-1).getEnd();
 			}
@@ -54,8 +54,8 @@ public class ActivityList {
 		}
 	}
 
-	public int totalWalkingTime() {
-		int time = 0;
+	public long totalWalkingTime() {
+		long time = 0;
 		for (Period p : activityList) {
 			if (p.getType() == Instance.Activities.Walking) {
 				time += p.getTime();
@@ -64,8 +64,8 @@ public class ActivityList {
 		return time;
 	}
 
-	public int totalStandingTime() {
-		int time = 0;
+	public long totalStandingTime() {
+		long time = 0;
 		for (Period p : activityList) {
 			if (p.getType() == Instance.Activities.Standing) {
 				time += p.getTime();
@@ -74,9 +74,9 @@ public class ActivityList {
 		return time;
 	}
 
-	public float totalQueueingTime() {
-		float queueStart = getQueueingStartTime();
-		float queueEnd = getQueueingEndTime();
+	public long totalQueueingTime() {
+		long queueStart = getQueueingStartTime();
+		long queueEnd = getQueueingEndTime();
 
 		if(queueEnd < 0)
 			return -1;
@@ -84,11 +84,11 @@ public class ActivityList {
 		return queueEnd - queueStart;
 	}
 
-	public double averageServiceTime() {
-		double totalServiceTime = 0;
+	public long averageServiceTime() {
+		long totalServiceTime = 0;
 		int services = 0;
-		float queueStart = getQueueingStartTime();
-		float queueEnd = getQueueingEndTime();
+		long queueStart = getQueueingStartTime();
+		long queueEnd = getQueueingEndTime();
 
 		if(queueEnd < 0)
 			return -1;
@@ -100,7 +100,7 @@ public class ActivityList {
 			}
 		}
 
-		return totalServiceTime / (double) services;
+		return totalServiceTime / services;
 	}
 
 	public int getWalkingPeriods() {
@@ -111,20 +111,26 @@ public class ActivityList {
 		return standingPeriods;
 	}
 
-	public float getQueueingStartTime() {
+	public long getQueueingStartTime() {
 		for (int i = 0; i < activityList.size(); i++) {
 			Period p = activityList.get(i);
 			if (p.getType() == Instance.Activities.Walking) {
+				if (activityList.size() <= i+1)
+					return -1;
+
 				return activityList.get(i+1).getStart();
 			}
 		}
 		return -1;
 	}
 
-	public float getQueueingEndTime() {
+	public long getQueueingEndTime() {
 		for (int i = activityList.size()-1; i >= 0; i--) {
 			Period p = activityList.get(i);
 			if (p.getType() == Instance.Activities.Walking && p.getTime() > 10000) {
+				if (i-1 <= 0)
+					return -1;
+
 				return activityList.get(i-1).getEnd();
 			}
 		}

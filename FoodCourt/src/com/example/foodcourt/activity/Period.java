@@ -5,31 +5,31 @@ import com.example.foodcourt.knn.Instance;
 public class Period {
 
 	private Instance.Activities type;
-	private float start;
-	private float end;
+	private long start;
+	private long end;
 
 	public Period(Instance.Activities type) {
 		this.type = type;
 	}
-	public Period(Instance.Activities type, float start) {
+	public Period(Instance.Activities type, long start) {
 		this.type = type;
 		setStart(start);
 		setEnd(start);
 	}
 
-	public float getStart() { return this.start; }
-	public float getEnd() { return this.end; }
+	public long getStart() { return this.start; }
+	public long getEnd() { return this.end; }
 
 	/**
 	 * Start - end
 	 * @return
 	 */
-	public float getTime() { return this.end - this.start; }
+	public long getTime() { return this.end - this.start; }
 
-	public void setStart(float start) {
+	public void setStart(long start) {
 		this.start = start;
 	}
-	public void setEnd(float end) {
+	public void setEnd(long end) {
 		this.end = end;
 	}
 

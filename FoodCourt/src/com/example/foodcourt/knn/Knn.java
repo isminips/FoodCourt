@@ -13,7 +13,7 @@ public class Knn {
 
 		double sumMagnitude = 0;
 		double maxMagnitude = 0;
-		float time = 0;
+		long time = 0;
 
 		for (Measurement line : measurements) {
 			sumMagnitude += line.getMagnitude();
@@ -57,11 +57,7 @@ public class Knn {
 			}
 		}
 
-		if (walking > standing) {
-			return Instance.Activities.Walking;
-		} else {
-			return Instance.Activities.Standing;
-		}
+		return Instance.determineActivity(standing, walking);
 	}
 
 	private static ArrayList<Neighbor> getNearestNeighbors(ArrayList<Neighbor> distances) {

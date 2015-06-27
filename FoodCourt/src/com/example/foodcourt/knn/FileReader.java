@@ -44,7 +44,7 @@ public class FileReader {
 						Double.parseDouble(meanMagnitude),
 						Double.parseDouble(maxMagnitude),
 						Double.parseDouble(varianceMagnitude),
-						Float.parseFloat(time)
+						Long.parseLong(time)
 				);
 
 				instances.add(instance);

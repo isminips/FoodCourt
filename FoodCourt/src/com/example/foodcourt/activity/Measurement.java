@@ -4,7 +4,7 @@ public class Measurement {
     private float x;
     private float y;
     private float z;
-    private float time;
+    private long time;
 
     public Measurement(float x, float y, float z) {
         this.x = x;
@@ -12,7 +12,7 @@ public class Measurement {
         this.z = z;
     }
 
-    public Measurement(float x, float y, float z, float time) {
+    public Measurement(float x, float y, float z, long time) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -43,7 +43,7 @@ public class Measurement {
         this.z = z;
     }
 
-    public float getTime() {
+    public long getTime() {
         return time;
     }
 
