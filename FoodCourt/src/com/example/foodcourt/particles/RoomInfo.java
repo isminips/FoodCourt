@@ -177,7 +177,13 @@ public class RoomInfo {
     }
 
     public boolean collidesWithWall(Point point) {
-        return isRoom() && (point.getX() < x || point.getX() > x + width);
+        if (name.equals("C17")) {
+            return isRoom() && (point.getX() > x + width);
+        } else if (name.equals("C18")) {
+            return isRoom() && (point.getX() < x);
+        } else {
+            return isRoom() && (point.getX() < x || point.getX() > x + width);
+        }
     }
 
     /**
