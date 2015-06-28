@@ -10,6 +10,8 @@ public class BaseActivity extends Activity {
 
 	private Toast t;
 
+
+
 	protected void toast(String message) {
 		if (t == null)
 			t = Toast.makeText(this, message, Toast.LENGTH_SHORT);

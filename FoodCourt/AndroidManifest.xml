@@ -19,6 +19,7 @@
     <uses-feature android:name="android.hardware.sensor.compass"/>
     <uses-feature android:name="android.hardware.sensor.magnetic_field"/>
 
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"

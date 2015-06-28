@@ -73,6 +73,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
         if (magnetometer != null) {
             sensorManager.registerListener(this, magnetometer, SENSOR_SENSITIVITY);
+            System.out.println("Magnetome");
         } else {
             System.out.println("Error: Magnetometer not found");
         }
@@ -81,7 +82,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
             // Load KNN training set
             try {
-                InputStream trainStream = activity.getAssets().open("trainingSet9.csv");
+                InputStream trainStream = activity.getAssets().open("trainingSet10.csv");
                 FileReader trainReader = new FileReader(trainStream);
                 trainingSet = trainReader.buildInstances();
             } catch (IOException e) {
