@@ -34,6 +34,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 	private Sensor accelerometer;
 	private TextView currentActivityLabel;
 	private TextView currentActivityTimeLabel;
+	private Button clearButton;
 	private Instance.Activities tier2CurrentActivity;
 	private long tier2CurrentActivityStartTime;
 	private int tier2ActivitySwitches;
@@ -87,16 +88,22 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 		setContentView(R.layout.activity_queueing);
 		currentActivityLabel = (TextView) findViewById(R.id.currentActivityLabel);
 		currentActivityTimeLabel = (TextView) findViewById(R.id.currentActivityTimeLabel);
+		clearButton = (Button) findViewById(R.id.clear);
 	}
 
 	private void reset() {
 		data = new ArrayList<Measurement>();
 		saving_data = "";
 		tier2ActivitySwitches = 0;
+		tier2CurrentActivityStartTime = 0;
+		tier2CurrentActivity = null;
+		currentActivityLabel.setText("");
+		currentActivityTimeLabel.setText("");
 		startTime = System.currentTimeMillis();
 		activityList = new ActivityList();
 		tier1 = new ArrayList<Instance>();
 		tier2 = new ArrayList<Instance>();
+		clearButton.setText("Clear");
 	}
 
 	// onResume() register the accelerometer for listening the events
@@ -133,6 +140,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 
 			if (tier1.size() % TIER_2_SAMPLING == 0) {
 				tier2.add(tier2classify(tier1.subList(tier1.size() - TIER_2_SAMPLING, tier1.size() - 1)));
+				clearButton.setText("Clear ("+tier2.size()+")");
 
 				if (tier2CurrentActivity == Instance.Activities.Walking && tier2ActivitySwitches > 2 && (tier2.get(tier2.size() - 1).getTime() - tier2CurrentActivityStartTime) > 10000) {
 					stop(null);
