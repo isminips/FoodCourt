@@ -7,7 +7,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 
-import com.example.foodcourt.ActivityMonitoringActivity;
+import com.example.foodcourt.QueueingActivity;
 import com.example.foodcourt.LocalizationActivity;
 import com.example.foodcourt.activity.Measurement;
 import com.example.foodcourt.knn.FileReader;
@@ -46,7 +46,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         initializeSensors();
 
         while (!isCancelled()) {
-            if (movementData.size() >= ActivityMonitoringActivity.TIER_1_SAMPLING) {
+            if (movementData.size() >= QueueingActivity.TIER_1_SAMPLING) {
                 processSensorValues();
             }
         }

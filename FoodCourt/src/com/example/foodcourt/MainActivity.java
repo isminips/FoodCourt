@@ -13,8 +13,8 @@ public class MainActivity extends BaseActivity {
 		getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
-	public void startActivityMonitoring(View view) {
-		Intent intent = new Intent(this, ActivityMonitoringActivity.class);
+	public void startQueueing(View view) {
+		Intent intent = new Intent(this, QueueingActivity.class);
 		startActivity(intent);
 	}
 

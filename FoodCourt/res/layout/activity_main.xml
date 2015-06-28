@@ -10,12 +10,12 @@
     android:paddingBottom="10dp" >
 
     <Button
-        android:id="@+id/activity_monitoring"
+        android:id="@+id/queueing"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:onClick="startActivityMonitoring"
-        android:text="Activity Monitoring" />
+        android:onClick="startQueueing"
+        android:text="Queueing" />
 
     <Button
         android:id="@+id/localization"

@@ -9,7 +9,7 @@
         android:targetSdkVersion="18" />
       <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name= "android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -17,8 +17,6 @@
     <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION"/>
     <uses-feature android:name="android.hardware.sensor.accelerometer"/>
     <uses-feature android:name="android.hardware.sensor.compass"/>
-    <uses-feature android:name="android.hardware.sensor.linear_acceleration"/>
-    <uses-feature android:name="android.hardware.sensor.gravity"/>
     <uses-feature android:name="android.hardware.sensor.magnetic_field"/>
 
     <application
@@ -38,7 +36,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.foodcourt.ActivityMonitoringActivity"
+            android:name=".QueueingActivity"
             android:screenOrientation="portrait"/>
         <activity
             android:theme="@android:style/Theme.NoTitleBar"

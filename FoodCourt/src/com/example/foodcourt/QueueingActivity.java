@@ -25,7 +25,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActivityMonitoringActivity extends BaseActivity implements SensorEventListener {
+public class QueueingActivity extends BaseActivity implements SensorEventListener {
 
 	public static final int TIER_1_SAMPLING = 10;
 	public static final int TIER_2_SAMPLING = 4;
@@ -84,7 +84,7 @@ public class ActivityMonitoringActivity extends BaseActivity implements SensorEv
 	}
 
 	public void initializeViews() {
-		setContentView(R.layout.activity_activity_monitoring);
+		setContentView(R.layout.activity_queueing);
 		currentActivityLabel = (TextView) findViewById(R.id.currentActivityLabel);
 		currentActivityTimeLabel = (TextView) findViewById(R.id.currentActivityTimeLabel);
 	}
