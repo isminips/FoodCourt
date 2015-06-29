@@ -99,7 +99,7 @@ public class LocalizationActivity extends BaseActivity {
 
 		initializeParticleCloud();
 		initializeRSSI();
-		loadRSSIdatabase();
+		//loadRSSIdatabase();
 		initializeMotionModel();
 	}
 
@@ -223,7 +223,7 @@ public class LocalizationActivity extends BaseActivity {
 		log("Wifi results obtained: " + results.size() + " results");
 
 		if (results.size() > 0) {
-			wifiScanData.put(results.get(results.size()-1).getTimestamp(), results);
+			wifiScanData.put(System.currentTimeMillis(), results);
 		}
 
 		wifiManager.startScan();
@@ -252,9 +252,6 @@ public class LocalizationActivity extends BaseActivity {
 
 	private void resetRSSImeasurements() {
 		wifiScanData = new TreeMap<Long, List<WifiResult>>();
-		if (rssiDatabase != null) {
-			rssiDatabase.updateTime();
-		}
 	}
 
 	// BUTTONS

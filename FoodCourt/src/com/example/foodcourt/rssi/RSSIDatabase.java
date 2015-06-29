@@ -37,10 +37,6 @@ public class RSSIDatabase {
         return database.size();
     }
 
-    public void updateTime() {
-        lastMappedTime = System.currentTimeMillis();
-    }
-
     public void add(WifiResult wifiResult) {
         if (wifiResult == null) return;
 
@@ -106,7 +102,7 @@ public class RSSIDatabase {
                 }
             }
 
-            //System.out.println("Movement between " + scanTime + " and " + previousScanTime + " was: " + movement[0] + ", " + movement[1]);
+            System.out.println("Movement between " + scanTime + " and " + previousScanTime + " was: " + movement[0] + ", " + movement[1]);
 
             // we now know where we were supposed to be at each scan time, so add the estimated rooms!
             for (WifiResult scanResult : wifiScanData.get(scanTime)) {
@@ -194,7 +190,6 @@ public class RSSIDatabase {
         }
 
         System.out.println("Loaded database from SD: "+database.size()+ " rooms");
-        //System.out.println(database);
 
         return database;
     }
@@ -251,7 +246,7 @@ public class RSSIDatabase {
                 }
 
                 // Normalize over number of times this RSSI/mac is found in this room
-                distance += Math.pow(level - compLevel, 2) / compList.size();
+                distance += Math.pow(level - (compLevel / compList.size()), 2);
                 matches++;
             }
 

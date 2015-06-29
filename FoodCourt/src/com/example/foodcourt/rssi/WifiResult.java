@@ -46,7 +46,7 @@ public class WifiResult {
     }
 
     public boolean hasRoom() {
-        return room != null && room.length() != 0;
+        return room != null && room.length() > 0;
     }
 
     public String toString() {

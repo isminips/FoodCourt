@@ -30,6 +30,9 @@ public class WifiScanReceiver extends BroadcastReceiver {
 
         for (ScanResult scan : wifiScanList) {
             int channel = ((scan.frequency - 2412) / 5) + 1;  //calculates accurately for channels 1-13. Channel 14 is not generally available.
+
+            if (scan.SSID.length() == 0 || scan.SSID.contains(";")) continue;
+
             results.add(new WifiResult(scan.BSSID, scan.SSID, scan.level, channel, scan.timestamp));
         }
 
