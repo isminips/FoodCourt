@@ -82,7 +82,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
 
             // Load KNN training set
             try {
-                InputStream trainStream = activity.getAssets().open("trainingSet10.csv");
+                InputStream trainStream = activity.getAssets().open("trainingSet.csv");
                 FileReader trainReader = new FileReader(trainStream);
                 trainingSet = trainReader.buildInstances();
             } catch (IOException e) {

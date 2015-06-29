@@ -70,7 +70,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 		initializeAcc();
 
 		try {
-			trainingSet = loadTrainingSet("trainingSet10.csv");
+			trainingSet = loadTrainingSet("trainingSet.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
