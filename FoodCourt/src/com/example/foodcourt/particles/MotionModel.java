@@ -132,9 +132,9 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
                     if (activity == Instance.Activities.Walking) {
                         double deviceOrientationDegrees = Math.toDegrees(azimuth) + BUILDING_ORIENTATION + DEVICE_ORIENTATION;
                         deviceOrientationDegrees = deviceOrientationDegrees >= 0 ? deviceOrientationDegrees : deviceOrientationDegrees + 360;
+                        deviceOrientationDegrees = roundToNearest45Degrees(deviceOrientationDegrees);
 
-                        // TODO determine best speed
-                        double speed = 3; // speed in m/s
+                        double speed = 1.6; // speed in m/s
 
                         // Get elapsed time
                         int elapsedMs = (int) (movementData.get(movementData.size()-1).getTime() - movementData.get(0).getTime());
@@ -158,6 +158,21 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         }
 
         return success;
+    }
+
+    private double roundToNearest45Degrees(double angle) {
+        final double ROUND = 45;
+
+        double upper = ROUND / 2;
+        int pie = 0;
+        while (upper < 360) {
+            if (angle < upper)
+                return pie*ROUND;
+
+            upper += ROUND;
+            pie++;
+        }
+        return 0;
     }
 
     @Override
