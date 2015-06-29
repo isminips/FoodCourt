@@ -30,17 +30,17 @@ public class Instance {
 	}
 
 	public static Activities determineActivity(String activity) {
-		if (activity.equals("Standing")) {
+		if (activity.equals(Activities.Standing.toString())) {
 			return Activities.Standing;
 		}
-		else if (activity.equals("Walking")) {
+		else if (activity.equals(Activities.Walking.toString())) {
 			return Activities.Walking;
 		}
 		return null;
 	}
 
 	public static Activities determineActivity(int standing, int walking) {
-		return walking > standing ? Instance.Activities.Walking : Instance.Activities.Standing;
+		return walking >= standing ? Instance.Activities.Walking : Instance.Activities.Standing;
 	}
 
 	public Activities getLabel() {

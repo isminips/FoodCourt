@@ -103,6 +103,23 @@ public class ActivityList {
 		return totalServiceTime / services;
 	}
 
+	public int getServices() {
+		int services = 0;
+		long queueStart = getQueueingStartTime();
+		long queueEnd = getQueueingEndTime();
+
+		if(queueEnd < 0)
+			return -1;
+
+		for (Period p : activityList) {
+			if (p.getType() == Instance.Activities.Standing && p.getStart() >= queueStart && p.getEnd() <= queueEnd) {
+				services++;
+			}
+		}
+
+		return services;
+	}
+
 	public int getWalkingPeriods() {
 		return walkingPeriods;
 	}

@@ -270,7 +270,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 		long averageServiceTime = activityList.averageServiceTime();
 		if (totalQueueingTime > 0 && averageServiceTime > 0) {
 			showInfo("Queueing information",
-					"Total queueing time: " + msToS(totalQueueingTime) + "\n" + "Average service time: " + msToS(averageServiceTime));
+					"Total queueing time: " + msToS(totalQueueingTime) + "\n" + "Average service time: " + msToS(averageServiceTime) + "\n" + "People in front: " + (activityList.getServices()-1));
 		} else {
 			showInfo("Queueing not finished", "Please try again");
 		}
