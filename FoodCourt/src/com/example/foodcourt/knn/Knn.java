@@ -13,7 +13,7 @@ public class Knn {
 
 		double sumMagnitude = 0;
 		double maxMagnitude = 0;
-		double minMagnitude=0;
+		double minMagnitude = Double.MAX_VALUE;
 		long time = 0;
 
 		for (Measurement line : measurements) {

@@ -27,8 +27,8 @@ import java.util.List;
 
 public class QueueingActivity extends BaseActivity implements SensorEventListener {
 
-	public static final int TIER_1_SAMPLING = 10;
-	public static final int TIER_2_SAMPLING = 3;
+	public static final int TIER_1_SAMPLING = 15;
+	public static final int TIER_2_SAMPLING = 2;
 
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
