@@ -36,6 +36,7 @@ public class FileReader {
 				String label = st.nextToken();
 				String meanMagnitude = st.nextToken();
 				String maxMagnitude = st.nextToken();
+				String minMagnitude = st.nextToken();
 				String varianceMagnitude = st.nextToken();
 				String time = st.nextToken();
 
@@ -43,6 +44,7 @@ public class FileReader {
 						label,
 						Double.parseDouble(meanMagnitude),
 						Double.parseDouble(maxMagnitude),
+						Double.parseDouble(minMagnitude),
 						Double.parseDouble(varianceMagnitude),
 						Long.parseLong(time)
 				);

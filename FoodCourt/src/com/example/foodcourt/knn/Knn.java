@@ -5,7 +5,7 @@ import com.example.foodcourt.activity.Measurement;
 import java.util.ArrayList;
 
 public class Knn {
-	public static final int NUM_ATTRS = 5;
+	public static final int NUM_ATTRS = 6;
 	public static final int K = 5;
 
 	public static Instance createInstanceFromMeasurements(ArrayList<Measurement> measurements, String trainingStatus) {
@@ -13,13 +13,18 @@ public class Knn {
 
 		double sumMagnitude = 0;
 		double maxMagnitude = 0;
+		double minMagnitude=0;
 		long time = 0;
 
 		for (Measurement line : measurements) {
 			sumMagnitude += line.getMagnitude();
 
+
 			if (line.getMagnitude() > maxMagnitude) {
 				maxMagnitude = line.getMagnitude();
+			}
+			if (line.getMagnitude() < minMagnitude) {
+				minMagnitude =line.getMagnitude();
 			}
 
 			time = line.getTime();
@@ -35,7 +40,7 @@ public class Knn {
 
 		// HERE WE SHOULD CREATE FEATURES
 		// like mean magnitude, std magnitude, mean x, mean y.. etc
-		return new Instance(trainingStatus, meanMagnitude, maxMagnitude, varianceMagnitude, time);
+		return new Instance(trainingStatus, meanMagnitude, maxMagnitude, minMagnitude, varianceMagnitude, time);
 	}
 
 	public static Instance.Activities classify(Instance instance, ArrayList<Instance> trainingSet) {
@@ -74,12 +79,13 @@ public class Knn {
 		ArrayList<Neighbor> distances = new ArrayList<Neighbor>();
 
 		for (int i = 0; i < instances.size(); i++) {
+
 			Instance other = instances.get(i);
 			double distance = 0;
 
 			// for each feature, go through and calculate the "distance"
 			distance += Math.pow((other.getMeanMagnitude() - instance.getMeanMagnitude()), 2);
-			distance += Math.pow((other.getMaxMagnitude() - instance.getMaxMagnitude()), 2);
+			distance += Math.pow(((other.getMaxMagnitude() -other.getMinMagnitude()) - (instance.getMaxMagnitude() -instance.getMinMagnitude())), 2);
 			distance += Math.pow((other.getVarianceMagnitude() - instance.getVarianceMagnitude()), 2);
 
 			Neighbor neighbor = new Neighbor(other, distance);

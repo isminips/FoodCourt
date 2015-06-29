@@ -10,6 +10,7 @@ public class Instance {
 	private Activities label;
 	private double meanMagnitude;
 	private double maxMagnitude;
+	private double minMagnitude;
 	private double varianceMagnitude;
 	private long time;
 
@@ -17,10 +18,11 @@ public class Instance {
 		// empty constructor
 	}
 
-	public Instance(String label, double meanMagnitude, double maxMagnitude, double varianceMagnitude, long time) {
+	public Instance(String label, double meanMagnitude, double maxMagnitude, double minMagnitude, double varianceMagnitude, long time) {
 		this.label = determineActivity(label);
 		this.meanMagnitude = meanMagnitude;
 		this.maxMagnitude = maxMagnitude;
+		this.minMagnitude = minMagnitude;
 		this.varianceMagnitude = varianceMagnitude;
 		this.time = time;
 	}
@@ -63,6 +65,10 @@ public class Instance {
 		this.maxMagnitude = maxMagnitude;
 	}
 
+	public double getMinMagnitude() {return minMagnitude;}
+
+	public void setMinMagnitude (double minMagnitude) {this.minMagnitude = minMagnitude;}
+
 	public double getVarianceMagnitude() {
 		return varianceMagnitude;
 	}
@@ -80,6 +86,6 @@ public class Instance {
 	}
 
 	public String toString() {
-		return label + "," + meanMagnitude + "," + maxMagnitude + "," + varianceMagnitude + "," + time;
+		return label + "," + meanMagnitude + "," + maxMagnitude + ","  + minMagnitude + "," + varianceMagnitude + "," + time;
 	}
 }

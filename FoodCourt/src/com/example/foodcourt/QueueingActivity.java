@@ -28,7 +28,7 @@ import java.util.List;
 public class QueueingActivity extends BaseActivity implements SensorEventListener {
 
 	public static final int TIER_1_SAMPLING = 10;
-	public static final int TIER_2_SAMPLING = 4;
+	public static final int TIER_2_SAMPLING = 3;
 
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
@@ -70,7 +70,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 		initializeAcc();
 
 		try {
-			trainingSet = loadTrainingSet("trainingSet9.csv");
+			trainingSet = loadTrainingSet("trainingSet10.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
