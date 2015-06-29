@@ -36,7 +36,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
     private long measureStart = System.currentTimeMillis();
     private ArrayList<Measurement> movementData = new ArrayList<Measurement>();
     private ArrayList<Instance> trainingSet;
-
+    static final float ALPHA = 0.25f; // if ALPHA = 1 OR 0, no filter applies.
     public MotionModel(LocalizationActivity activity) {
         this.activity = activity;
     }
@@ -107,16 +107,18 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.size() > 0) {
             float R[] = new float[9];
             float I[] = new float[9];
+            float Rot[] = new float[9];
 
-            mGeomagnetic[0] /= mGeomagnetic_size;
-            mGeomagnetic[1] /= mGeomagnetic_size;
-            mGeomagnetic[2] /= mGeomagnetic_size;
+//            mGeomagnetic[0] /= mGeomagnetic_size;
+//            mGeomagnetic[1] /= mGeomagnetic_size;
+//            mGeomagnetic[2] /= mGeomagnetic_size;
 
             success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
 
+
             mGravity = null;
             mGeomagnetic = null;
-            mGeomagnetic_size = 0;
+//            mGeomagnetic_size = 0;
 
             if (success) {
                 float orientation[] = new float[3];
@@ -180,14 +182,18 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             if (mGeomagnetic == null) {
                 mGeomagnetic = event.values;
+
             } else {
-                mGeomagnetic[0] += event.values[0];
-                mGeomagnetic[1] += event.values[1];
-                mGeomagnetic[2] += event.values[2];
+                mGeomagnetic = lowPass(event.values.clone(), mGeomagnetic);
+//                mGeomagnetic[0] += event.values[0];
+//                mGeomagnetic[1] += event.values[1];
+//                mGeomagnetic[2] += event.values[2];
             }
-            mGeomagnetic_size++;
+            //mGeomagnetic_size++;
         } else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            mGravity = event.values;
+            //mGravity = event.values;
+            mGravity = lowPass(event.values.clone(), mGravity);
+
             float x = event.values[0];
             float y = event.values[1];
             float z = event.values[2];
@@ -202,5 +208,13 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    protected float[] lowPass( float[] input, float[] output ) {
+        if ( output == null ) return input;
+        for ( int i=0; i<input.length; i++ ) {
+            output[i] = output[i] + ALPHA * (input[i] - output[i]);
+        }
+        return output;
     }
 }
