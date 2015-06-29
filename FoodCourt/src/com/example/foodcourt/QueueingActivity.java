@@ -76,12 +76,46 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 		}
 
 		reset();
+		//performTests();
 	}
 
 	private ArrayList<Instance> loadTrainingSet(String filename) throws IOException {
 		InputStream trainStream = getAssets().open(filename);
 		FileReader trainReader = new FileReader(trainStream);
 		return trainReader.buildInstances();
+	}
+
+	private void performTests() {
+		ArrayList<Instance> tier1test = new ArrayList<Instance>();
+		ArrayList<Instance> tier2test = new ArrayList<Instance>();
+		ArrayList<Instance> tier2train = new ArrayList<Instance>();
+
+		for (Instance testInstance : trainingSet) {
+			Instance.Activities currentActivity = Knn.classify(testInstance, trainingSet);
+			Instance tier1instance = new Instance();
+			tier1instance.setLabel(currentActivity);
+			tier1test.add(tier1instance);
+
+			if (tier1test.size() % TIER_2_SAMPLING == 0) {
+				tier2test.add(tier2classify(tier1test.subList(tier1test.size() - TIER_2_SAMPLING, tier1test.size() - 1)));
+				tier2train.add(tier2classify(trainingSet.subList(tier1test.size() - TIER_2_SAMPLING, tier1test.size() - 1)));
+			}
+		}
+
+		log("-----TEST-----");
+		for (int i = 0; i < trainingSet.size(); i++) {
+			Instance.Activities train = trainingSet.get(i).getLabel();
+			Instance.Activities test = tier1test.get(i).getLabel();
+			log("Tier1: " + train + " (train) - " + test + " (test)" + (train == test ? "" : " ERROR1"));
+
+			int tier2index = ((i+1)/TIER_2_SAMPLING)-1;
+			if ((i+1) % TIER_2_SAMPLING == 0 && tier2test.size() > tier2index) {
+				train = tier2train.get(tier2index).getLabel();
+				test = tier2test.get(tier2index).getLabel();
+				log("Tier2: " + train + " (train) - " + test + " (test)" + (train == test ? "" : " ERROR2"));
+			}
+		}
+		log("-----TEST-----");
 	}
 
 	public void initializeViews() {
