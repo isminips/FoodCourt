@@ -27,7 +27,6 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
     private Sensor accelerometer;
 
     private float[] mGeomagnetic = null;
-    private int mGeomagnetic_size = 0;
     private float[] mGravity = null;
 
     public static final Double BUILDING_ORIENTATION = -157.0;
@@ -107,18 +106,11 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         if (mGravity != null && mGeomagnetic != null && movementData != null && movementData.size() > 0) {
             float R[] = new float[9];
             float I[] = new float[9];
-            float Rot[] = new float[9];
-
-//            mGeomagnetic[0] /= mGeomagnetic_size;
-//            mGeomagnetic[1] /= mGeomagnetic_size;
-//            mGeomagnetic[2] /= mGeomagnetic_size;
 
             success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
 
-
             mGravity = null;
             mGeomagnetic = null;
-//            mGeomagnetic_size = 0;
 
             if (success) {
                 float orientation[] = new float[3];
@@ -134,7 +126,7 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
                     if (activity == Instance.Activities.Walking) {
                         double deviceOrientationDegrees = Math.toDegrees(azimuth) + BUILDING_ORIENTATION + DEVICE_ORIENTATION;
                         deviceOrientationDegrees = deviceOrientationDegrees >= 0 ? deviceOrientationDegrees : deviceOrientationDegrees + 360;
-                        deviceOrientationDegrees = roundToNearest45Degrees(deviceOrientationDegrees);
+                        deviceOrientationDegrees = roundToNearestDegrees(deviceOrientationDegrees);
 
                         double speed = 1.6; // speed in m/s
 
@@ -162,8 +154,8 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         return success;
     }
 
-    private double roundToNearest45Degrees(double angle) {
-        final double ROUND = 45;
+    private double roundToNearestDegrees(double angle) {
+        final double ROUND = 90;
 
         double upper = ROUND / 2;
         int pie = 0;
@@ -182,17 +174,11 @@ public class MotionModel extends AsyncTask<String, Movement, Void> implements Se
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             if (mGeomagnetic == null) {
                 mGeomagnetic = event.values;
-
             } else {
                 mGeomagnetic = lowPass(event.values.clone(), mGeomagnetic);
-//                mGeomagnetic[0] += event.values[0];
-//                mGeomagnetic[1] += event.values[1];
-//                mGeomagnetic[2] += event.values[2];
             }
-            //mGeomagnetic_size++;
         } else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            //mGravity = event.values;
-            mGravity = lowPass(event.values.clone(), mGravity);
+            mGravity = event.values;
 
             float x = event.values[0];
             float y = event.values[1];
