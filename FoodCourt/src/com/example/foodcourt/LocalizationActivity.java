@@ -23,13 +23,12 @@ import com.example.foodcourt.rssi.RSSIDatabase;
 import com.example.foodcourt.rssi.WifiResult;
 import com.example.foodcourt.rssi.WifiScanReceiver;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.TreeMap;
 
 public class LocalizationActivity extends BaseActivity {
@@ -38,6 +37,7 @@ public class LocalizationActivity extends BaseActivity {
 	private WifiManager wifiManager;
 	private WifiScanReceiver wifiReciever;
 	public final static int NUMBER_PARTICLES = 1000;
+	public final static int PARTICLE_PREVIOUS_MOVEMENTS = 20;
 	public final static double CONVERGENCE_SIZE = 2;
 	public final static Point TOTAL_DRAW_SIZE = new Point(72, 14.3);
 	private Cloud particleCloud;
@@ -48,6 +48,7 @@ public class LocalizationActivity extends BaseActivity {
 	private TreeMap<Long, List<WifiResult>> wifiScanData;
 	private TreeMap<Long, Movement> movementData;
 	private RSSIDatabase rssiDatabase;
+	private Queue<Point> positions;
 
 	private final Handler visualizationUpdater = new Handler();
 	final int VISUALIZATION_UPDATE_DELAY = 2000; //milliseconds
@@ -174,6 +175,7 @@ public class LocalizationActivity extends BaseActivity {
 			}
 		}
 		particleCloud = new Cloud(particles);
+		positions = new LinkedList<Point>();
 
 		movementData = new TreeMap<Long, Movement>();
 
@@ -187,7 +189,8 @@ public class LocalizationActivity extends BaseActivity {
 
 		compass.setCompassAngle(movement.getAngle());
 
-		particleCloud = ParticleFilter.filter(particleCloud, movement, roomInfo);
+		particleCloud = ParticleFilter.filter(particleCloud, movement, roomInfo, positions);
+		positions.add(particleCloud.getEstimatedPosition());
 	}
 
 	public RoomInfo getEstimatedRoom(Point estimatedPoint) {

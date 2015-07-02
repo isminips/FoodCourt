@@ -5,15 +5,19 @@ import com.example.foodcourt.LocalizationActivity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 
 public class ParticleFilter {
 
-    public static Cloud filter(Cloud cloud, Movement movement, HashMap<String, RoomInfo> rooms) {
+    public static Cloud filter(Cloud cloud, Movement movement, HashMap<String, RoomInfo> rooms, Queue<Point> previousPositions) {
         List<Particle> particleList = cloud.getParticles();
 
         // Move the cloud
         particleList = moveCloud(particleList, movement.getMovement());
+
+        // If too long on same position, spread particles
+        particleList = checkMovement(particleList, previousPositions);
 
         // If long stretched line, make small spread along the axis with smallest variance
         particleList = checkSpread(particleList);
@@ -111,17 +115,53 @@ public class ParticleFilter {
 
         for (Particle p : particles) {
             if (varx < spreadRatio)
-                p.move(getRandomDisplacement(rnd), 0);
+                p.move(getRandomDisplacement(rnd)/1.5, 0);
 
             if (vary < spreadRatio)
-                p.move(0, getRandomDisplacement(rnd));
+                p.move(0, getRandomDisplacement(rnd)/1.5);
+        }
+
+        return particles;
+    }
+
+    // Return a list of spread particles
+    private static List<Particle> checkMovement(List<Particle> particles, Queue<Point> previousPositions) {
+        if (previousPositions.size() < LocalizationActivity.PARTICLE_PREVIOUS_MOVEMENTS)
+            return particles;
+
+        double moveX = 0, moveY = 0;
+
+        Point first = previousPositions.remove();
+        for (int i = 0; i < previousPositions.size(); i++) {
+            Point p = previousPositions.remove();
+
+            moveX += Math.abs(first.getX() - p.getX());
+            moveY += Math.abs(first.getY() - p.getY());
+
+            first = p;
+            previousPositions.add(p);
+        }
+
+        double meanX = moveX / previousPositions.size();
+        double meanY = moveY / previousPositions.size();
+
+        System.out.println(meanX + " , " + meanY);
+
+        double moveThreshold = 0.03;
+
+        if (meanX < moveThreshold && meanY < moveThreshold) {
+            System.out.println("We do displacement!");
+            Random rnd = new Random();
+            for (Particle p : particles) {
+                p.move(getRandomDisplacement(rnd) * 15, getRandomDisplacement(rnd) * 15);
+            }
         }
 
         return particles;
     }
 
     private static double getRandomDisplacement(Random rnd) {
-        return (rnd.nextDouble() - 0.5) / 1.5;
+        return (rnd.nextDouble() - 0.5);
     }
 
 }
