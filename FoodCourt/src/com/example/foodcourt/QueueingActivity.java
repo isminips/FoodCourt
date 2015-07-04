@@ -86,7 +86,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 
 	public void initializeViews() {
 		setContentView(R.layout.activity_queueing);
-		currentActivityLabel = (TextView) findViewById(R.id.currentActivityLabel);
+		//currentActivityLabel = (TextView) findViewById(R.id.currentActivityLabel);
 		currentActivityTimeLabel = (TextView) findViewById(R.id.currentActivityTimeLabel);
 		clearButton = (Button) findViewById(R.id.clear);
 	}
@@ -97,7 +97,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 		tier2ActivitySwitches = 0;
 		tier2CurrentActivityStartTime = 0;
 		tier2CurrentActivity = null;
-		currentActivityLabel.setText("");
+		//currentActivityLabel.setText("");
 		currentActivityTimeLabel.setText("");
 		startTime = System.currentTimeMillis();
 		activityList = new ActivityList();
@@ -212,7 +212,7 @@ public class QueueingActivity extends BaseActivity implements SensorEventListene
 		Instance.Activities currentActivity = Knn.classify(classificationInstance, trainingSet);
 		classificationInstance.setLabel(currentActivity);
 
-		currentActivityLabel.setText(currentActivity.toString());
+		//currentActivityLabel.setText(currentActivity.toString());
 		log("Tier 1: " + classificationInstance);
 
 		return classificationInstance;

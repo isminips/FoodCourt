@@ -145,7 +145,7 @@ public class ParticleFilter {
         double meanX = moveX / previousPositions.size();
         double meanY = moveY / previousPositions.size();
 
-        System.out.println(meanX + " , " + meanY);
+        //System.out.println(meanX + " , " + meanY);
 
         double moveThreshold = 0.03;
 

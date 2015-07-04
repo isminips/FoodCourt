@@ -124,7 +124,8 @@ public class RSSIDatabase {
         }
 
         // our database is now completed until here
-        lastMappedTime = mappedUntil;
+        if (size() > 0)
+            lastMappedTime = mappedUntil;
     }
 
     public void writeToSD() {

@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 
 
 import com.example.foodcourt.particles.Cloud;
@@ -100,7 +101,7 @@ public class LocalizationActivity extends BaseActivity {
 
 		initializeParticleCloud();
 		initializeRSSI();
-		//loadRSSIdatabase();
+		resetRSSIdatabase();
 		initializeMotionModel();
 	}
 
@@ -236,6 +237,9 @@ public class LocalizationActivity extends BaseActivity {
 		if (rssiDatabase == null) resetRSSIdatabase();
 
 		rssiDatabase.createRSSIdatabase(this, particleCloud, wifiScanData, movementData);
+
+		Button resetButton = (Button) findViewById(R.id.initial_rssi);
+		resetButton.setEnabled(rssiDatabase.size() > 0);
 	}
 
 	private void loadRSSIdatabase() {
@@ -244,6 +248,8 @@ public class LocalizationActivity extends BaseActivity {
 
 	private void resetRSSIdatabase() {
 		rssiDatabase = new RSSIDatabase();
+		Button resetButton = (Button) findViewById(R.id.initial_rssi);
+		resetButton.setEnabled(false);
 	}
 
 	private void saveRSSIdatabase() {
@@ -260,13 +266,13 @@ public class LocalizationActivity extends BaseActivity {
 	// BUTTONS
 	public void initializePA(View view) {
 		toast("Reset particle cloud");
+		createRSSIdatabase();
 		initializeParticleCloud();
 		resetRSSImeasurements();
 	}
 
 	public void initializeRSSI(View view) {
 		toast("Initialized RSSI database");
-		initializeRSSI();
 		resetRSSIdatabase();
 	}
 
@@ -291,7 +297,7 @@ public class LocalizationActivity extends BaseActivity {
 		if (wifiScanData.size() > 0 && rssiDatabase != null && rssiDatabase.size() > 0) {
 			toast("Estimating position based on RSSI...");
 
-			List<WifiResult> lastScan = wifiScanData.pollLastEntry().getValue();
+			List<WifiResult> lastScan = wifiScanData.lastEntry().getValue();
 
 			String estimatedRoom = rssiDatabase.determineRoom(lastScan);
 
@@ -299,6 +305,7 @@ public class LocalizationActivity extends BaseActivity {
 			toast("Estimated room: " + estimatedRoom);
 		} else {
 			toast("Unable to estimate position based on RSSI");
+			log("Database: "+(rssiDatabase == null ? 0 : rssiDatabase.size()) + " Scan data: "+wifiScanData.size());
 		}
 	}
 }
